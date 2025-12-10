@@ -1,11 +1,17 @@
 import Card from '../components/Card'
 import Button from '../components/Button'
 import TickingBalance from '../components/TickingBalance'
-import { useWallet } from '../context/WalletContext'
+import { useWallets } from '@privy-io/react-auth'
 import { useStreamingBalance } from '../hooks/useBalance'
+import { getProvider } from '../lib/contracts'
 
 export default function Dashboard() {
-  const { provider, address } = useWallet()
+  const { wallets } = useWallets()
+  const address = wallets[0]?.address || ''
+  
+  // Get provider for useStreamingBalance
+  const provider = wallets[0] ? getProvider() : null
+  
   const { balance, streams, totalRate, isStreaming } = useStreamingBalance(provider, address, false)
   const containerStyles = {
     maxWidth: '1280px',

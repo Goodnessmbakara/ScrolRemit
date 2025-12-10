@@ -1,4 +1,3 @@
-import '@privy-io/react-auth/styles.css'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
@@ -54,6 +53,8 @@ function App() {
         },
         supportedChains: [scrollSepolia],
         defaultChain: scrollSepolia,
+        // Disable Solana to avoid build issues
+        solana: undefined,
       }}
     >
       <Router>
