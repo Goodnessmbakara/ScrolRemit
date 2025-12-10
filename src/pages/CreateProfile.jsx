@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Card from '../components/Card'
 import Input from '../components/Input'
 import Button from '../components/Button'
 import { uploadImage, uploadJSON, validateFile } from '../lib/pinata'
 
 export default function CreateProfile() {
+  const { ready, authenticated, login } = usePrivy()
+  const { wallets } = useWallets()
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
   const [imageFile, setImageFile] = useState(null)

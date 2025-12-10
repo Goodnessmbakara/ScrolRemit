@@ -81,6 +81,32 @@ export function getUSDCContract(signerOrProvider) {
  * @returns {Promise<{success: boolean, txHash?: string, error?: string}>}
  */
 export async function setProfileOnChain(cid, username) {
+  // Check if contract is deployed
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    console.warn('ProfileRegistry contract not deployed. Using localStorage for development.')
+    // Store in localStorage as fallback for development
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      const address = await (await getSigner()).getAddress()
+      profiles[address] = { cid, username, createdAt: Date.now() }
+      localStorage.setItem('profiles', JSON.stringify(profiles))
+      
+      return {
+        success: true,
+        txHash: 'mock-tx-' + Date.now(), // Mock transaction hash
+        isMock: true
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: 'Failed to save profile in development mode: ' + error.message
+      }
+    }
+  }
+  
+  // Production path: Use smart contract
   try {
     const signer = await getSigner()
     const contract = getProfileRegistryContract(signer)
@@ -107,6 +133,20 @@ export async function setProfileOnChain(cid, username) {
  * @returns {Promise<string>} IPFS CID or empty string
  */
 export async function getProfileFromChain(address) {
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    // Development fallback: read from localStorage
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      return profiles[address]?.cid || ''
+    } catch (error) {
+      console.error('Error reading profile from localStorage:', error)
+      return ''
+    }
+  }
+  
+  // Production path: Read from smart contract
   try {
     const provider = await getProvider()
     const contract = getProfileRegistryContract(provider)
