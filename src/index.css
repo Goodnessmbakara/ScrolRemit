@@ -35,10 +35,10 @@
   --spacing-4xl: 6rem;    /* 96px */
   --spacing-5xl: 8rem;    /* 128px */
   
-  /* Border */
+  /* Border and Radius */
   --border-width: 1px;
   --border-width-thick: 2px;
-  --border-radius: 0px; /* Sharp, modern edges */
+  --border-radius: 8px; /* Rounded corners for buttons */
   
   /* Transitions */
   --transition-fast: 150ms ease;
