@@ -2,13 +2,16 @@ import { useState } from 'react'
 import Card from '../components/Card'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import { uploadImage, uploadJSON, validateFile } from '../lib/pinata'
 
 export default function CreateProfile() {
   const [name, setName] = useState('')
   const [bio, setBio] = useState('')
-  const [profileImage, setProfileImage] = useState(null)
+  const [imageFile, setImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [error, setError] = useState(null)
 
   const containerStyles = {
     maxWidth: '800px',
@@ -47,24 +50,95 @@ export default function CreateProfile() {
     transition: 'border-color var(--transition-base)',
   }
 
-  const handleImageSelect = (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0]
-    if (file) {
-      setProfileImage(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    // Validate file
+    const validation = validateFile(file)
+    if (!validation.valid) {
+      setError(validation.errors.join('. '))
+      return
     }
+
+    setError(null)
+    setImageFile(file)
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setImagePreview(reader.result)
+    }
+    reader.readAsDataURL(file)
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!name || !bio) {
+      setError('Please fill in all required fields')
+      return
+    }
+
     setUploading(true)
-    // TODO: Upload to Pinata
-    // TODO: Save profile to blockchain/database
-    console.log('Creating profile:', { name, bio, profileImage })
-    setTimeout(() => setUploading(false), 2000)
+    setError(null)
+    setUploadProgress(0)
+
+    try {
+      let profileImageUrl = ''
+      let profileImageCid = ''
+
+      // Upload image if provided
+      if (imageFile) {
+        const imageResult = await uploadImage(imageFile, {
+          name: `${name}-profile-image`,
+          metadata: {
+            creator: name
+          }
+        }, (progress) => {
+          setUploadProgress(progress * 0.5) // First 50% for image
+        })
+        
+        profileImageUrl = imageResult.optimizedUrl // Use optimized URL
+        profileImageCid = imageResult.cid
+      }
+
+      // Upload profile metadata as JSON
+      const metadata = {
+        name,
+        bio,
+        imageUrl: profileImageUrl,
+        imageCid: profileImageCid,
+        createdAt: new Date().toISOString(),
+        version: '1.0'
+      }
+
+      setUploadProgress(60)
+      const metadataResult = await uploadJSON(metadata, {
+        name: `${name}-profile-metadata`
+      })
+
+      setUploadProgress(100)
+
+      console.log('Profile created successfully!')
+      console.log('Metadata IPFS Hash:', metadataResult.ipfsHash)
+      console.log('Metadata URL:', metadataResult.url)
+      
+      // TODO: Save profile CID to smart contract or local state
+      alert(`Profile created! Metadata CID: ${metadataResult.cid}`)
+      
+      // Reset form
+      setName('')
+      setBio('')
+      setImageFile(null)
+      setImagePreview(null)
+    } catch (err) {
+      console.error('Error creating profile:', err)
+      setError(err.message || 'Failed to create profile. Please try again.')
+    } finally {
+      setUploading(false)
+      setUploadProgress(0)
+    }
   }
 
   return (
@@ -124,7 +198,7 @@ export default function CreateProfile() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImageSelect}
+                  onChange={handleImageChange}
                   style={{ display: 'none' }}
                   id="profile-image-upload"
                 />
@@ -149,13 +223,43 @@ export default function CreateProfile() {
               </div>
 
               <Button 
+                type="submit" 
                 variant="primary" 
-                fullWidth
+                fullWidth 
                 onClick={handleSubmit}
-                disabled={!name || !bio || uploading}
+                disabled={uploading || !name || !bio}
               >
-                {uploading ? 'Creating Profile...' : 'Create Profile'}
+                {uploading ? `Creating Profile... ${uploadProgress}%` : 'Create Profile'}
               </Button>
+
+              {error && (
+                <p style={{ 
+                  color: 'var(--color-accent)', 
+                  fontSize: 'var(--font-size-sm)',
+                  marginTop: 'var(--spacing-md)'
+                }}>
+                  {error}
+                </p>
+              )}
+
+              {uploading && (
+                <div style={{ marginTop: 'var(--spacing-md)' }}>
+                  <div style={{
+                    width: '100%',
+                    height: '4px',
+                    backgroundColor: 'var(--color-off-black)',
+                    borderRadius: '2px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${uploadProgress}%`,
+                      height: '100%',
+                      backgroundColor: 'var(--color-accent)',
+                      transition: 'width 0.3s ease'
+                    }}></div>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>
