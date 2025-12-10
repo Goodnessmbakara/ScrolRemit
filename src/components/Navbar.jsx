@@ -111,12 +111,27 @@ export default function Navbar() {
             authenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
                 <span style={addressStyles}>{getDisplayName()}</span>
-                <Button variant="outline" onClick={logout}>
+                <Button 
+                  variant="outline" 
+                  onClick={logout}
+                  style={{ 
+                    paddingLeft: 'var(--spacing-2xl)',
+                    paddingRight: 'var(--spacing-2xl)'
+                  }}
+                >
                   Sign Out
                 </Button>
               </div>
             ) : (
-              <Button variant="primary" onClick={login}>
+              <Button 
+                variant="primary" 
+                onClick={login}
+                style={{ 
+                  paddingLeft: 'var(--spacing-3xl)',
+                  paddingRight: 'var(--spacing-3xl)',
+                  minWidth: '140px'
+                }}
+              >
                 Sign In
               </Button>
             )
