@@ -1,11 +1,20 @@
 import { PinataSDK } from 'pinata'
 
-// Initialize Pinata SDK
+// Initialize Pinata SDK with error handling
 // NOTE: In production, use backend API to generate presigned URLs instead of exposing JWT
-const pinata = new PinataSDK({
-  pinataJwt: import.meta.env.VITE_PINATA_JWT,
-  pinataGateway: import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
-})
+let pinata = null
+
+try {
+  if (import.meta.env.VITE_PINATA_JWT) {
+    pinata = new PinataSDK({
+      pinataJwt: import.meta.env.VITE_PINATA_JWT,
+      pinataGateway: import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+    })
+  }
+} catch (error) {
+  console.warn('Failed to initialize Pinata SDK:', error.message)
+  pinata = null
+}
 
 /**
  * Upload image to IPFS via Pinata with optimization
@@ -26,9 +35,9 @@ export async function uploadImage(file, options = {}, onProgress) {
     throw new Error(`File too large. Maximum size: 10MB`)
   }
 
-  // Check if Pinata is configured
-  if (!import.meta.env.VITE_PINATA_JWT) {
-    console.warn('Pinata JWT not configured. Using mock upload for development.')
+  // Check if Pinata SDK is properly initialized
+  if (!pinata || !import.meta.env.VITE_PINATA_JWT) {
+    console.warn('Pinata not configured or failed to initialize. Using mock upload for development.')
     return mockUpload(file, onProgress)
   }
 
@@ -36,7 +45,7 @@ export async function uploadImage(file, options = {}, onProgress) {
     // Report initial progress
     if (onProgress) onProgress(0)
 
-    // Upload file using Pinata SDK
+    // Upload file using Pinata SDK v2.5.1 API
     const upload = await pinata.upload.file(file, {
       metadata: {
         name: options.name || file.name,
@@ -75,8 +84,8 @@ export async function uploadImage(file, options = {}, onProgress) {
  * @returns {Promise<{ipfsHash: string, url: string, cid: string}>}
  */
 export async function uploadJSON(jsonData, options = {}) {
-  if (!import.meta.env.VITE_PINATA_JWT) {
-    console.warn('Pinata JWT not configured. Using mock upload for development.')
+  if (!pinata || !import.meta.env.VITE_PINATA_JWT) {
+    console.warn('Pinata not configured or failed to initialize. Using mock upload for development.')
     return {
       ipfsHash: 'Qm' + Math.random().toString(36).substring(7),
       cid: 'baf' + Math.random().toString(36).substring(7),
@@ -85,7 +94,7 @@ export async function uploadJSON(jsonData, options = {}) {
   }
 
   try {
-    // Upload JSON using Pinata SDK
+    // Upload JSON using Pinata SDK v2.5.1 API
     const upload = await pinata.upload.json(jsonData, {
       metadata: {
         name: options.name || 'profile-metadata',

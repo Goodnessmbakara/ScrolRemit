@@ -77,15 +77,21 @@ export default function CreateProfile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
-    if (!name || !bio) {
-      setError('Please fill in all required fields')
+
+    // Check authentication
+    if (!authenticated || !wallets.length) {
+      setError('Please sign in with your wallet to create a profile')
       return
     }
 
-    setUploading(true)
+    if (!name.trim()) {
+      setError('Name is required')
+      return
+    }
+
     setError(null)
-    setUploadProgress(0)
+    setUploading(true)
+    setUploadProgress(5)
 
     try {
       let profileImageUrl = ''
@@ -137,12 +143,17 @@ export default function CreateProfile() {
 
       setUploadProgress(100)
 
-      console.log('✅ Profile created successfully!')
+      const mode = result.isMock ? '(Development Mode - LocalStorage)' : '(Production - Blockchain)'
+      console.log(`✅ Profile created successfully! ${mode}`)
       console.log('Metadata CID:', metadataResult.cid)
-      console.log('Blockchain TX:', result.txHash)
+      console.log('TX Hash:', result.txHash)
       console.log('Username:', username)
       
-      alert(`✅ Profile created!\n\nUsername: ${username}\nYour profile is now permanently stored and will load automatically on re-login.`)
+      const successMessage = result.isMock
+        ? `✅ Profile created in Development Mode!\n\nUsername: ${username}\n\nNote: This is stored locally. Deploy the ProfileRegistry contract for permanent blockchain storage.`
+        : `✅ Profile created on Blockchain!\n\nUsername: ${username}\nTransaction: ${result.txHash}\n\nYour profile is now permanently stored and will load automatically on re-login.`
+      
+      alert(successMessage)
       
       // Reset form
       setName('')
