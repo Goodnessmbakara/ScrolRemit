@@ -17,40 +17,83 @@ export default function CreateProfile() {
   const [error, setError] = useState(null)
 
   const containerStyles = {
-    maxWidth: '800px',
+    maxWidth: '1200px',
     margin: '0 auto',
     padding: 'var(--spacing-3xl) var(--spacing-lg)',
   }
 
   const headerStyles = {
-    fontSize: 'var(--font-size-4xl)',
-    fontWeight: 'var(--font-weight-semibold)',
-    marginBottom: 'var(--spacing-md)',
+    fontSize: 'var(--font-size-5xl)',
+    fontWeight: 'var(--font-weight-bold)',
+    marginBottom: 'var(--spacing-sm)',
+    textAlign: 'center',
   }
 
   const subheadStyles = {
-    fontSize: 'var(--font-size-base)',
+    fontSize: 'var(--font-size-lg)',
     color: 'var(--color-off-black)',
-    marginBottom: 'var(--spacing-2xl)',
+    marginBottom: 'var(--spacing-3xl)',
+    textAlign: 'center',
   }
 
-  const gridStyles = {
+  const splitLayoutStyles = {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: 'var(--spacing-2xl)',
+    gap: 'var(--spacing-3xl)',
+    alignItems: 'start',
   }
 
-  const imageUploadStyles = {
-    width: '100%',
-    height: '300px',
-    border: `var(--border-width-thick) dashed var(--color-black)`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+  const previewCardStyles = {
+    position: 'sticky',
+    top: 'var(--spacing-2xl)',
+    background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
+    padding: 'var(--spacing-2xl)',
+    borderRadius: '16px',
+    border: '2px solid var(--color-black)',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+  }
+
+  const uploadBoxStyles = {
+    border: '3px dashed var(--color-accent)',
+    borderRadius: '12px',
+    padding: 'var(--spacing-3xl)',
+    textAlign: 'center',
     cursor: 'pointer',
     position: 'relative',
     overflow: 'hidden',
-    transition: 'border-color var(--transition-base)',
+    transition: 'all var(--transition-base)',
+    backgroundColor: 'rgba(0, 47, 167, 0.02)',
+  }
+
+  const previewImageStyles = {
+    width: '200px',
+    height: '200px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    margin: '0 auto var(--spacing-lg)',
+    border: '4px solid var(--color-accent)',
+    boxShadow: '0 4px 12px rgba(0, 47, 167, 0.2)',
+  }
+
+  const previewNameStyles = {
+    fontSize: 'var(--font-size-3xl)',
+    fontWeight: 'var(--font-weight-bold)',
+    marginBottom: 'var(--spacing-sm)',
+    textAlign: 'center',
+  }
+
+  const previewBioStyles = {
+    fontSize: 'var(--font-size-base)',
+    color: 'var(--color-off-black)',
+    marginBottom: 'var(--spacing-xl)',
+    textAlign: 'center',
+    lineHeight: '1.6',
+  }
+
+  const buttonGroupStyles = {
+    display: 'flex',
+    gap: 'var(--spacing-md)',
+    justifyContent: 'center',
   }
 
   const handleImageChange = (e) => {
@@ -176,163 +219,171 @@ export default function CreateProfile() {
         Set up your creator profile to start receiving support from around the world.
       </p>
 
-      <div style={gridStyles}>
-        <div>
-          <Card padding="lg">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-              <Input
-                label="Display Name"
-                placeholder="Your name or artist name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
+      <div style={splitLayoutStyles}>
+        {/* Left: Form */}
+        <Card padding="xl">
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
+            <Input
+              label="Display Name *"
+              placeholder="Your name or artist name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              fullWidth
+            />
+
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: 'var(--spacing-sm)',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+              }}>
+                Bio
+              </label>
+              <textarea
+                placeholder="Tell supporters about your work..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                rows={6}
+                style={{
+                  width: '100%',
+                  padding: 'var(--spacing-md)',
+                  fontSize: 'var(--font-size-base)',
+                  fontFamily: 'var(--font-family)',
+                  border: 'var(--border-width) solid var(--color-black)',
+                  borderRadius: 'var(--border-radius)',
+                  outline: 'none',
+                  resize: 'vertical',
+                }}
               />
+            </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-sm)',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                }}>
-                  Bio
-                </label>
-                <textarea
-                  placeholder="Tell supporters about your work..."
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  rows={6}
-                  style={{
-                    width: '100%',
-                    padding: 'var(--spacing-md)',
-                    fontSize: 'var(--font-size-base)',
-                    fontFamily: 'var(--font-family)',
-                    border: 'var(--border-width) solid var(--color-black)',
-                    outline: 'none',
-                    resize: 'vertical',
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  marginBottom: 'var(--spacing-sm)',
-                  fontSize: 'var(--font-size-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                }}>
-                  Profile Photo
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  style={{ display: 'none' }}
-                  id="profile-image-upload"
-                />
-                <label htmlFor="profile-image-upload" style={imageUploadStyles}>
-                  {imagePreview ? (
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--color-off-black)' }}>
-                      <p style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-sm)' }}>
-                        Click to upload
-                      </p>
-                      <p style={{ fontSize: 'var(--font-size-sm)' }}>
-                        JPG, PNG or GIF
-                      </p>
-                    </div>
-                  )}
-                </label>
-              </div>
-
-              <Button 
-                type="submit" 
-                variant="primary" 
-                fullWidth 
-                onClick={handleSubmit}
-                disabled={uploading || !name || !bio}
-              >
-                {uploading ? `Creating Profile... ${uploadProgress}%` : 'Create Profile'}
-              </Button>
-
-              {error && (
-                <p style={{ 
-                  color: 'var(--color-accent)', 
-                  fontSize: 'var(--font-size-sm)',
-                  marginTop: 'var(--spacing-md)'
-                }}>
-                  {error}
-                </p>
-              )}
-
-              {uploading && (
-                <div style={{ marginTop: 'var(--spacing-md)' }}>
-                  <div style={{
-                    width: '100%',
-                    height: '4px',
-                    backgroundColor: 'var(--color-off-black)',
-                    borderRadius: '2px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${uploadProgress}%`,
-                      height: '100%',
-                      backgroundColor: 'var(--color-accent)',
-                      transition: 'width 0.3s ease'
-                    }}></div>
+            <div>
+              <label style={{
+                display: 'block',
+                marginBottom: 'var(--spacing-sm)',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+              }}>
+                Profile Photo
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: 'none' }}
+                id="profile-image-upload"
+              />
+              <label htmlFor="profile-image-upload" style={uploadBoxStyles}>
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px' }}
+                  />
+                ) : (
+                  <div style={{ padding: 'var(--spacing-2xl)' }}>
+                    <p style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--spacing-sm)', color: 'var(--color-accent)' }}>
+                      📷
+                    </p>
+                    <p style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-xs)', fontWeight: 'var(--font-weight-medium)' }}>
+                      Click to upload
+                    </p>
+                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)' }}>
+                      JPG, PNG or GIF (max 10MB)
+                    </p>
                   </div>
-                </div>
-              )}
+                )}
+              </label>
             </div>
-          </Card>
-        </div>
 
-        <div>
-          <Card padding="lg" border={true}>
-            <h3 style={{ 
-              fontSize: 'var(--font-size-xl)', 
-              fontWeight: 'var(--font-weight-semibold)',
-              marginBottom: 'var(--spacing-lg)',
-            }}>
-              Preview
-            </h3>
-            <div style={{ 
-              width: '100%', 
-              height: '200px', 
-              backgroundColor: '#f5f5f5',
-              marginBottom: 'var(--spacing-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              {imagePreview ? (
-                <img 
-                  src={imagePreview} 
-                  alt="Profile" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <span style={{ color: 'var(--color-off-black)' }}>No image</span>
-              )}
-            </div>
-            <h4 style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-sm)' }}>
-              {name || 'Your Name'}
-            </h4>
-            <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-off-black)', marginBottom: 'var(--spacing-lg)' }}>
-              {bio || 'Your bio will appear here...'}
-            </p>
-            <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-              <Button variant="primary" fullWidth>Send Tip</Button>
-              <Button variant="outline" fullWidth>Start Stream</Button>
-            </div>
-          </Card>
+            {error && (
+              <div style={{
+                padding: 'var(--spacing-md)',
+                backgroundColor: '#ffebee',
+                border: '1px solid #ef5350',
+                borderRadius: 'var(--border-radius)',
+               color: '#c62828',
+                fontSize: 'var(--font-size-sm)',
+              }}>
+                {error}
+              </div>
+            )}
+
+            {uploading && (
+              <div style={{ textAlign: 'center' }}>
+                <div style={{
+                  width: '100%',
+                  height: '8px',
+                  backgroundColor: '#e0e0e0',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                  marginBottom: 'var(--spacing-sm)',
+                }}>
+                  <div style={{
+                    width: `${uploadProgress}%`,
+                    height: '100%',
+                    backgroundColor: 'var(--color-accent)',
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)' }}>
+                  Uploading... {uploadProgress}%
+                </p>
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              variant="primary" 
+              fullWidth
+              disabled={uploading || !authenticated}
+            >
+              {uploading ? 'Creating Profile...' : 'Create Profile'}
+            </Button>
+
+            {!authenticated && (
+              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)', textAlign: 'center' }}>
+                Please <button onClick={login} style={{ color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>sign in</button> to create your profile
+              </p>
+            )}
+          </form>
+        </Card>
+
+        {/* Right: Preview */}
+        <div style={previewCardStyles}>
+          <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-off-black)' }}>
+            Live Preview
+          </h3>
+          
+          {imagePreview && (
+            <img 
+              src={imagePreview} 
+              alt="Profile" 
+              style={previewImageStyles}
+            />
+          )}
+          
+          <h2 style={previewNameStyles}>
+            {name || 'Your Name'}
+          </h2>
+          
+          <p style={previewBioStyles}>
+            {bio || 'Your bio will appear here...'}
+          </p>
+          
+          <div style={buttonGroupStyles}>
+            <Button variant="primary">
+              Send Tip
+            </Button>
+            <Button variant="outline">
+              Start Stream
+            </Button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
+```
