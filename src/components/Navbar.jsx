@@ -1,10 +1,24 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Button from './Button'
 import '../index.css'
 
 export default function Navbar({ walletConnected = false, onConnectWallet, userAddress }) {
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20)
+    }
+    
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const navStyles = {
-    backgroundColor: 'var(--color-white)',
+    backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.85)' : 'var(--color-white)',
+    backdropFilter: isScrolled ? 'blur(10px)' : 'none',
+    transition: 'all var(--transition-base)',
     position: 'sticky',
     top: 0,
     zIndex: 1000,
@@ -59,7 +73,7 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
             src="/logo.png" 
             alt="ScrolRemit" 
             style={{
-              height: '48px',
+              height: '64px',
               width: 'auto',
             }}
           />
@@ -68,6 +82,7 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
         <div style={navLinksStyles}>
           {walletConnected && (
             <>
+              <Link to="/browse" style={linkStyles}>Browse</Link>
               <Link to="/dashboard" style={linkStyles}>Dashboard</Link>
               <Link to="/send" style={linkStyles}>Send</Link>
               <Link to="/profile" style={linkStyles}>Profile</Link>

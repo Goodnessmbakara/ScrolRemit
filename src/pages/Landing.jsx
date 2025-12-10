@@ -46,7 +46,6 @@ export default function Landing() {
 
   const sectionStyles = {
     padding: 'var(--spacing-5xl) var(--spacing-lg)',
-    borderTop: 'var(--border-width) solid var(--color-black)',
   }
 
   const sectionHeaderStyles = {
@@ -160,7 +159,7 @@ export default function Landing() {
       <section style={{
         ...sectionStyles,
         textAlign: 'center',
-        backgroundColor: 'var(--color-black)',
+        backgroundColor: 'var(--color-off-black)',
         color: 'var(--color-white)',
       }}>
         <h2 style={{

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard'
 import Send from './pages/Send'
 import CreateProfile from './pages/CreateProfile'
 import PublicProfile from './pages/PublicProfile'
+import Browse from './pages/Browse'
 import { WalletProvider, useWallet } from './context/WalletContext'
 import './index.css'
 
@@ -28,6 +29,7 @@ function AppContent() {
         <main style={{ flex: 1 }}>
           <Routes>
             <Route path="/" element={<Landing />} />
+            <Route path="/browse" element={<Browse />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/send" element={<Send />} />
             <Route path="/profile" element={<CreateProfile />} />
