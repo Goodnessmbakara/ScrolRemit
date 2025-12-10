@@ -1,16 +1,63 @@
-# React + Vite
+# ScrolRemit
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Premium fintech platform on Scroll network merging P2P remittance with creator patronage. Features real-time streaming payments.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- ⭐ **Real-Time Ticking Balance**: Watch funds increase second-by-second
+- 💸 **Dual Payments**: Instant send or stream over time
+- 👤 **Creator Profiles**: IPFS-backed shareable pages
+- 🔗 **Scroll Integration**: Sepolia testnet support with MetaMask
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Visit `http://localhost:5173`
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Design System
+
+**3-Color Palette**: White (#FFFFFF) • Black (#000000) • Klein Blue (#002FA7)
+
+No gradients or shadows - flat colors only. Premium Utility aesthetic.
+
+## Project Structure
+
+```
+src/
+├── components/     # Button, Input, Card, TickingBalance, Navbar
+├── pages/          # Landing, Dashboard, Send, CreateProfile, PublicProfile
+├── lib/            # web3.js, contracts.js, pinata.js
+├── hooks/          # useBalance.js
+└── context/        # WalletContext.jsx
+```
+
+## Smart Contract Integration
+
+Update addresses in `src/lib/contracts.js` after deployment:
+
+```javascript
+export const CONTRACTS = {
+  STREAMING_PAYMENT: '0x...',
+  USDC: '0x...',
+}
+```
+
+## Environment Variables
+
+```bash
+VITE_PINATA_JWT=your_jwt_token  # For creator profile storage
+```
+
+## Tech Stack
+
+- Vite + React
+- ethers.js v6
+- Scroll Sepolia
+- Pinata (IPFS)
+- React Router DOM
+
+Built on Scroll Network
