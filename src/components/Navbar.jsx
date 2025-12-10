@@ -1,10 +1,16 @@
 import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Button from './Button'
 import '../index.css'
 
-export default function Navbar({ walletConnected = false, onConnectWallet, userAddress }) {
+export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
+  const { ready, authenticated, login, logout, user } = usePrivy()
+  const { wallets } = useWallets()
+  
+  // Get the first wallet address (embedded or external)
+  const userAddress = wallets[0]?.address || ''
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,13 +42,7 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
   const logoStyles = {
     display: 'flex',
     alignItems: 'center',
-    gap: 'var(--spacing-md)',
     textDecoration: 'none',
-  }
-
-  const logoTextStyles = {
-    fontSize: 'var(--font-size-xl)',
-    fontWeight: 'var(--font-weight-semibold)',
     color: 'var(--color-black)',
   }
 
@@ -53,16 +53,34 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
   }
 
   const linkStyles = {
+    textDecoration: 'none',
+    color: 'var(--color-black)',
     fontSize: 'var(--font-size-base)',
     fontWeight: 'var(--font-weight-medium)',
-    color: 'var(--color-black)',
-    textDecoration: 'none',
-    transition: 'color var(--transition-fast)',
+    transition: 'color var(--transition-base)',
   }
 
-  const formatAddress = (address) => {
-    if (!address) return ''
-    return `${address.slice(0, 6)}...${address.slice(-4)}`
+  const addressStyles = {
+    fontSize: 'var(--font-size-sm)',
+    color: 'var(--color-off-black)',
+    fontFamily: 'monospace',
+  }
+
+  // Format address for display
+  const formatAddress = (addr) => {
+    if (!addr) return ''
+    return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`
+  }
+
+  // Get user's display name (email or wallet address)
+  const getDisplayName = () => {
+    if (user?.email?.address) {
+      return user.email.address
+    }
+    if (user?.google?.email) {
+      return user.google.email
+    }
+    return formatAddress(userAddress)
   }
 
   return (
@@ -80,7 +98,7 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
         </Link>
 
         <div style={navLinksStyles}>
-          {walletConnected && (
+          {authenticated && ready && (
             <>
               <Link to="/browse" style={linkStyles}>Browse</Link>
               <Link to="/dashboard" style={linkStyles}>Dashboard</Link>
@@ -88,15 +106,20 @@ export default function Navbar({ walletConnected = false, onConnectWallet, userA
               <Link to="/profile" style={linkStyles}>Profile</Link>
             </>
           )}
-          
-          {walletConnected ? (
-            <Button variant="secondary" onClick={onConnectWallet}>
-              {formatAddress(userAddress)}
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={onConnectWallet}>
-              Connect Wallet
-            </Button>
+
+          {ready && (
+            authenticated ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+                <span style={addressStyles}>{getDisplayName()}</span>
+                <Button variant="outline" onClick={logout}>
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Button variant="primary" onClick={login}>
+                Sign In
+              </Button>
+            )
           )}
         </div>
       </div>

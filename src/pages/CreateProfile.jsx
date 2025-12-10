@@ -90,13 +90,14 @@ export default function CreateProfile() {
 
       // Upload image if provided
       if (imageFile) {
+        setUploadProgress(10)
         const imageResult = await uploadImage(imageFile, {
           name: `${name}-profile-image`,
           metadata: {
             creator: name
           }
         }, (progress) => {
-          setUploadProgress(progress * 0.5) // First 50% for image
+          setUploadProgress(10 + (progress * 0.3)) // 10-40% for image
         })
         
         profileImageUrl = imageResult.optimizedUrl // Use optimized URL
@@ -104,6 +105,7 @@ export default function CreateProfile() {
       }
 
       // Upload profile metadata as JSON
+      setUploadProgress(45)
       const metadata = {
         name,
         bio,
@@ -113,19 +115,31 @@ export default function CreateProfile() {
         version: '1.0'
       }
 
-      setUploadProgress(60)
       const metadataResult = await uploadJSON(metadata, {
         name: `${name}-profile-metadata`
       })
 
+      setUploadProgress(60)
+
+      // Store profile CID on-chain (CRITICAL for persistence!)
+      setUploadProgress(70)
+      const username = name.toLowerCase().replace(/\s+/g, '-') // Convert to username format
+      
+      const { setProfileOnChain } = await import('../lib/contracts')
+      const result = await setProfileOnChain(metadataResult.cid, username)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to store profile on blockchain')
+      }
+
       setUploadProgress(100)
 
-      console.log('Profile created successfully!')
-      console.log('Metadata IPFS Hash:', metadataResult.ipfsHash)
-      console.log('Metadata URL:', metadataResult.url)
+      console.log('✅ Profile created successfully!')
+      console.log('Metadata CID:', metadataResult.cid)
+      console.log('Blockchain TX:', result.txHash)
+      console.log('Username:', username)
       
-      // TODO: Save profile CID to smart contract or local state
-      alert(`Profile created! Metadata CID: ${metadataResult.cid}`)
+      alert(`✅ Profile created!\n\nUsername: ${username}\nYour profile is now permanently stored and will load automatically on re-login.`)
       
       // Reset form
       setName('')

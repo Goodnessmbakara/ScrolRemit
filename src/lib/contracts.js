@@ -1,10 +1,24 @@
 import { ethers } from 'ethers'
+import { useWallets } from '@privy-io/react-auth'
 
 // Contract addresses - UPDATE THESE when deployed to Scroll
 export const CONTRACTS = {
-  STREAMING_PAYMENT: '0x0000000000000000000000000000000000000000', // TODO: Deploy contract
-  USDC: '0x0000000000000000000000000000000000000000', // Scroll Sepolia USDC
+  PROFILE_REGISTRY: import.meta.env.VITE_PROFILE_REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000',
+  STREAMING_PAYMENT: import.meta.env.VITE_STREAMING_PAYMENT_ADDRESS || '0x0000000000000000000000000000000000000000',
+  MOCK_USDC: import.meta.env.VITE_MOCK_USDC_ADDRESS || '0x0000000000000000000000000000000000000000',
 }
+
+// ProfileRegistry Contract ABI
+export const PROFILE_REGISTRY_ABI = [
+  'function setProfile(string calldata cid, string calldata username) external',
+  'function getProfile(address user) external view returns (string memory)',
+  'function getProfileByUsername(string calldata username) external view returns (string memory)',
+  'function getUsername(address user) external view returns (string memory)',
+  'function isUsernameAvailable(string calldata username) external view returns (bool)',
+  'function hasProfile(address user) external view returns (bool)',
+  'function deleteProfile() external',
+  'event ProfileUpdated(address indexed user, string cid, string username, uint256 timestamp)',
+]
 
 // Streaming Payment Contract ABI (simplified for demo)
 export const STREAMING_ABI = [
@@ -27,14 +41,120 @@ export const USDC_ABI = [
   'function decimals() external view returns (uint8)',
 ]
 
-// Get contract instances
-export function getStreamingContract(provider) {
-  return new ethers.Contract(CONTRACTS.STREAMING_PAYMENT, STREAMING_ABI, provider)
+/**
+ * Get ethers provider from Privy wallet
+ */
+export async function getProvider() {
+  if (typeof window.ethereum === 'undefined') {
+    throw new Error('No wallet provider found')
+  }
+  return new ethers.BrowserProvider(window.ethereum)
 }
 
-export function getUSDCContract(provider) {
-  return new ethers.Contract(CONTRACTS.USDC, USDC_ABI, provider)
+/**
+ * Get ethers signer from Privy wallet
+ */
+export async function getSigner() {
+  const provider = await getProvider()
+  return provider.getSigner()
 }
+
+// Get contract instances
+export function getProfileRegistryContract(signerOrProvider) {
+  return new ethers.Contract(CONTRACTS.PROFILE_REGISTRY, PROFILE_REGISTRY_ABI, signerOrProvider)
+}
+
+export function getStreamingContract(signerOrProvider) {
+  return new ethers.Contract(CONTRACTS.STREAMING_PAYMENT, STREAMING_ABI, signerOrProvider)
+}
+
+export function getUSDCContract(signerOrProvider) {
+  return new ethers.Contract(CONTRACTS.MOCK_USDC, USDC_ABI, signerOrProvider)
+}
+
+// ============ Profile Registry Functions ============
+
+/**
+ * Set user profile CID on-chain
+ * @param {string} cid - IPFS CID of profile metadata
+ * @param {string} username - Unique username
+ * @returns {Promise<{success: boolean, txHash?: string, error?: string}>}
+ */
+export async function setProfileOnChain(cid, username) {
+  try {
+    const signer = await getSigner()
+    const contract = getProfileRegistryContract(signer)
+    
+    const tx = await contract.setProfile(cid, username)
+    const receipt = await tx.wait()
+    
+    return {
+      success: true,
+      txHash: receipt.hash
+    }
+  } catch (error) {
+    console.error('Error setting profile on-chain:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+/**
+ * Get user profile CID from chain
+ * @param {string} address - User wallet address
+ * @returns {Promise<string>} IPFS CID or empty string
+ */
+export async function getProfileFromChain(address) {
+  try {
+    const provider = await getProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    const cid = await contract.getProfile(address)
+    return cid
+  } catch (error) {
+    console.error('Error getting profile from chain:', error)
+    return ''
+  }
+}
+
+/**
+ * Get profile by username
+ * @param {string} username - Username to query
+ * @returns {Promise<string>} IPFS CID or empty string
+ */
+export async function getProfileByUsername(username) {
+  try {
+    const provider = await getProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    const cid = await contract.getProfileByUsername(username)
+    return cid
+  } catch (error) {
+    console.error('Error getting profile by username:', error)
+    return ''
+  }
+}
+
+/**
+ * Check if username is available
+ * @param {string} username - Username to check
+ * @returns {Promise<boolean>}
+ */
+export async function isUsernameAvailable(username) {
+  try {
+    const provider = await getProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    return await contract.isUsernameAvailable(username)
+  } catch (error) {
+    console.error('Error checking username availability:', error)
+    return false
+  }
+}
+
+// ============ Streaming Payment Functions ============
 
 // Create a new payment stream
 export async function createStream(signer, recipient, amountUSDC, durationDays) {
