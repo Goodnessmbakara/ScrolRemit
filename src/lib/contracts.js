@@ -1,0 +1,205 @@
+import { ethers } from 'ethers'
+
+// Contract addresses - UPDATE THESE when deployed to Scroll
+export const CONTRACTS = {
+  STREAMING_PAYMENT: '0x0000000000000000000000000000000000000000', // TODO: Deploy contract
+  USDC: '0x0000000000000000000000000000000000000000', // Scroll Sepolia USDC
+}
+
+// Streaming Payment Contract ABI (simplified for demo)
+export const STREAMING_ABI = [
+  'function createStream(address recipient, uint256 amount, uint256 duration) external returns (uint256)',
+  'function cancelStream(uint256 streamId) external',
+  'function withdrawFromStream(uint256 streamId) external returns (uint256)',
+  'function getStreamBalance(uint256 streamId) external view returns (uint256)',
+  'function getActiveStreams(address recipient) external view returns (uint256[])',
+  'function streamInfo(uint256 streamId) external view returns (address sender, address recipient, uint256 rate, uint256 startTime, uint256 endTime, uint256 withdrawn, bool active)',
+  'event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 rate, uint256 duration)',
+  'event StreamWithdrawn(uint256 indexed streamId, address indexed recipient, uint256 amount)',
+  'event StreamCancelled(uint256 indexed streamId)',
+]
+
+// USDC Token ABI (ERC20)
+export const USDC_ABI = [
+  'function balanceOf(address account) external view returns (uint256)',
+  'function approve(address spender, uint256 amount) external returns (bool)',
+  'function allowance(address owner, address spender) external view returns (uint256)',
+  'function decimals() external view returns (uint8)',
+]
+
+// Get contract instances
+export function getStreamingContract(provider) {
+  return new ethers.Contract(CONTRACTS.STREAMING_PAYMENT, STREAMING_ABI, provider)
+}
+
+export function getUSDCContract(provider) {
+  return new ethers.Contract(CONTRACTS.USDC, USDC_ABI, provider)
+}
+
+// Create a new payment stream
+export async function createStream(signer, recipient, amountUSDC, durationDays) {
+  try {
+    const streamingContract = getStreamingContract(signer)
+    const usdcContract = getUSDCContract(signer)
+    
+    // Convert USDC amount to wei (6 decimals for USDC)
+    const amount = ethers.parseUnits(amountUSDC.toString(), 6)
+    const duration = durationDays * 24 * 60 * 60 // Convert days to seconds
+    
+    // Check allowance
+    const currentAllowance = await usdcContract.allowance(
+      await signer.getAddress(),
+      CONTRACTS.STREAMING_PAYMENT
+    )
+    
+    // Approve if needed
+    if (currentAllowance < amount) {
+      const approveTx = await usdcContract.approve(CONTRACTS.STREAMING_PAYMENT, amount)
+      await approveTx.wait()
+    }
+    
+    // Create stream
+    const tx = await streamingContract.createStream(recipient, amount, duration)
+    const receipt = await tx.wait()
+    
+    // Extract streamId from event
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = streamingContract.interface.parseLog(log)
+        return parsed.name === 'StreamCreated'
+      } catch {
+        return false
+      }
+    })
+    
+    const parsed = streamingContract.interface.parseLog(event)
+    return {
+      success: true,
+      streamId: parsed.args.streamId.toString(),
+      txHash: receipt.hash
+    }
+  } catch (error) {
+    console.error('Error creating stream:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Send instant payment (one-time transfer)
+export async function sendInstantPayment(signer, recipient, amountUSDC) {
+  try {
+    const usdcContract = getUSDCContract(signer)
+    const amount = ethers.parseUnits(amountUSDC.toString(), 6)
+    
+    const tx = await usdcContract.transfer(recipient, amount)
+    const receipt = await tx.wait()
+    
+    return {
+      success: true,
+      txHash: receipt.hash
+    }
+  } catch (error) {
+    console.error('Error sending payment:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Withdraw from a stream
+export async function withdrawFromStream(signer, streamId) {
+  try {
+    const streamingContract = getStreamingContract(signer)
+    
+    const tx = await streamingContract.withdrawFromStream(streamId)
+    const receipt = await tx.wait()
+    
+    // Extract withdrawn amount from event
+    const event = receipt.logs.find(log => {
+      try {
+        const parsed = streamingContract.interface.parseLog(log)
+        return parsed.name === 'StreamWithdrawn'
+      } catch {
+        return false
+      }
+    })
+    
+    const parsed = streamingContract.interface.parseLog(event)
+    const amount = ethers.formatUnits(parsed.args.amount, 6)
+    
+    return {
+      success: true,
+      amount,
+      txHash: receipt.hash
+    }
+  } catch (error) {
+    console.error('Error withdrawing from stream:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Get current streamable balance for a stream
+export async function getStreamBalance(provider, streamId) {
+  try {
+    const streamingContract = getStreamingContract(provider)
+    const balance = await streamingContract.getStreamBalance(streamId)
+    return ethers.formatUnits(balance, 6)
+  } catch (error) {
+    console.error('Error getting stream balance:', error)
+    return '0'
+  }
+}
+
+// Get all active streams for an address
+export async function getActiveStreams(provider, address) {
+  try {
+    const streamingContract = getStreamingContract(provider)
+    const streamIds = await streamingContract.getActiveStreams(address)
+    
+    // Fetch info for each stream
+    const streams = await Promise.all(
+      streamIds.map(async (id) => {
+        const info = await streamingContract.streamInfo(id)
+        return {
+          id: id.toString(),
+          sender: info.sender,
+          recipient: info.recipient,
+          rate: ethers.formatUnits(info.rate, 6),
+          startTime: Number(info.startTime),
+          endTime: Number(info.endTime),
+          withdrawn: ethers.formatUnits(info.withdrawn, 6),
+          active: info.active
+        }
+      })
+    )
+    
+    return streams
+  } catch (error) {
+    console.error('Error getting active streams:', error)
+    return []
+  }
+}
+
+// Calculate total streamable balance across all streams
+export async function getTotalStreamableBalance(provider, address) {
+  try {
+    const streams = await getActiveStreams(provider, address)
+    let total = 0
+    
+    for (const stream of streams) {
+      const balance = await getStreamBalance(provider, stream.id)
+      total += parseFloat(balance)
+    }
+    
+    return total.toFixed(6)
+  } catch (error) {
+    console.error('Error calculating total balance:', error)
+    return '0'
+  }
+}
