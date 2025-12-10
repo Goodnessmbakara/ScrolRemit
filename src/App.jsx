@@ -1,13 +1,30 @@
+import { lazy, Suspense } from 'react'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
-import Landing from './pages/Landing'
-import Dashboard from './pages/Dashboard'
-import Send from './pages/Send'
-import CreateProfile from './pages/CreateProfile'
-import PublicProfile from './pages/PublicProfile'
-import Browse from './pages/Browse'
 import './index.css'
+
+// Lazy load all pages for better performance
+const Landing = lazy(() => import('./pages/Landing'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Send = lazy(() => import('./pages/Send'))
+const CreateProfile = lazy(() => import('./pages/CreateProfile'))
+const PublicProfile = lazy(() => import('./pages/PublicProfile'))
+const Browse = lazy(() => import('./pages/Browse'))
+
+// Loading fallback component
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '50vh',
+    fontSize: 'var(--font-size-lg)',
+    color: 'var(--color-off-black)'
+  }}>
+    Loading...
+  </div>
+)
 
 // Scroll Sepolia network configuration
 const scrollSepolia = {
@@ -61,14 +78,16 @@ function App() {
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <Navbar />
           <main style={{ flex: 1 }}>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/browse" element={<Browse />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/send" element={<Send />} />
-              <Route path="/profile" element={<CreateProfile />} />
-              <Route path="/u/:username" element={<PublicProfile />} />
-            </Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/browse" element={<Browse />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/send" element={<Send />} />
+                <Route path="/profile" element={<CreateProfile />} />
+                <Route path="/u/:username" element={<PublicProfile />} />
+              </Routes>
+            </Suspense>
           </main>
         </div>
       </Router>
