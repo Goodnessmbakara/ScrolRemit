@@ -1,13 +1,34 @@
 import { useState } from 'react'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Card from '../components/Card'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import Modal from '../components/Modal'
+import UsernameAutocomplete from '../components/UsernameAutocomplete'
+import { 
+  validateRecipient, 
+  getSigner, 
+  createStream, 
+  getUSDCContract,
+  sendInstantPayment
+} from '../lib/contracts'
 
 export default function Send() {
+  const { authenticated, login } = usePrivy()
+  const { wallets } = useWallets()
+  
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [sendType, setSendType] = useState('instant') // 'instant' or 'stream'
   const [duration, setDuration] = useState('30') // days for streaming
+  
+  // Transaction state
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [showModal, setShowModal] = useState(false)
+  const [txStatus, setTxStatus] = useState('')
+  const [txHash, setTxHash] = useState('')
+  const [streamId, setStreamId] = useState(null)
 
   const containerStyles = {
     maxWidth: '600px',
@@ -53,15 +74,121 @@ export default function Send() {
     marginTop: 'var(--spacing-xl)',
   }
 
+  const labelStyles = {
+    display: 'block',
+    marginBottom: 'var(--spacing-sm)',
+    fontSize: 'var(--font-size-base)',
+    fontWeight: 'var(--font-weight-semibold)',
+  }
+
   const calculateStreamRate = () => {
     if (!amount || !duration || sendType !== 'stream') return 0
     const totalSeconds = parseFloat(duration) * 24 * 60 * 60
     return (parseFloat(amount) / totalSeconds).toFixed(8)
   }
 
-  const handleSend = () => {
-    console.log('Sending:', { recipient, amount, sendType, duration })
-    // TODO: Implement blockchain transaction
+  const handleUsernameSelect = (username, address) => {
+    setRecipient(`@${username}`)
+  }
+
+  const handleSend = async () => {
+    if (!authenticated || !wallets.length) {
+      setError('Please sign in to send payments')
+      return
+    }
+
+    setError('')
+    setLoading(true)
+    setShowModal(true)
+    setTxStatus('Validating recipient...')
+
+    try {
+      // ====== 1. Validate Recipient ======
+      const validation = await validateRecipient(recipient)
+      
+      if (!validation.valid) {
+        throw new Error(validation.error || 'Invalid recipient')
+      }
+
+      const recipientAddress = validation.address
+      console.log(`Sending to ${validation.type}: ${recipientAddress}`)
+
+      // ====== 2. Validate Amount ======
+      const amountNum = parseFloat(amount)
+      if (isNaN(amountNum) || amountNum <= 0) {
+        throw new Error('Please enter a valid amount')
+      }
+
+      // ====== 3. Get Signer ======
+      const signer = await getSigner(wallets[0])
+      const senderAddress = await signer.getAddress()
+
+      // ====== 4. Check USDC Balance ======
+      setTxStatus('Checking USDC balance...')
+      const usdcContract = getUSDCContract(signer)
+      const balance = await usdcContract.balanceOf(senderAddress)
+      const balanceFormatted = parseFloat(ethers.formatUnits(balance, 6))
+
+      if (balanceFormatted < amountNum) {
+        throw new Error(`Insufficient USDC balance. You have ${balanceFormatted.toFixed(2)} USDC but need ${amountNum} USDC`)
+      }
+
+      // ====== 5. Execute Payment ======
+      if (sendType === 'instant') {
+        // Instant Payment
+        setTxStatus('Preparing instant payment...')
+        
+        const result = await sendInstantPayment(signer, recipientAddress, amountNum)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Payment failed')
+        }
+
+        setTxHash(result.txHash)
+        setTxStatus('✅ Payment sent successfully!')
+        
+      } else {
+        // Streaming Payment
+        setTxStatus('Preparing stream...')
+        
+        const durationNum = parseFloat(duration)
+        if (isNaN(durationNum) || durationNum <= 0) {
+          throw new Error('Please enter a valid duration')
+        }
+
+        const result = await createStream(signer, recipientAddress, amountNum, durationNum)
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create stream')
+        }
+
+        setTxHash(result.txHash)
+        setStreamId(result.streamId)
+        setTxStatus('✅ Stream created successfully!')
+      }
+
+      // Reset form
+      setTimeout(() => {
+        setRecipient('')
+        setAmount('')
+        setDuration('30')
+      }, 2000)
+
+    } catch (err) {
+      console.error('Payment error:', err)
+      setError(err.message || 'An error occurred while processing payment')
+      setTxStatus('❌ Transaction failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const closeModal = () => {
+    setShowModal(false)
+    setTxHash('')
+    setStreamId(null)
+    setTxStatus('')
+    setError('')
   }
 
   return (
@@ -88,13 +215,14 @@ export default function Send() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-          <Input
-            label="Recipient Address or Username"
-            placeholder="0x... or @username"
-            value={recipient}
-            onChange={(e) => setRecipient(e.target.value)}
-            fullWidth
-          />
+          <div>
+            <label style={labelStyles}>Recipient Address or Username</label>
+            <UsernameAutocomplete
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              onSelect={handleUsernameSelect}
+            />
+          </div>
 
           <Input
             label="Amount (USDC)"
@@ -130,16 +258,119 @@ export default function Send() {
             </div>
           )}
 
-          <Button 
-            variant="primary" 
-            fullWidth
-            onClick={handleSend}
-            disabled={!recipient || !amount}
-          >
-            {sendType === 'instant' ? 'Send Payment' : 'Start Stream'}
-          </Button>
+          {error && (
+            <div style={{
+              padding: 'var(--spacing-md)',
+              backgroundColor: '#FEE2E2',
+              border: '2px solid #EF4444',
+              borderRadius: 'var(--border-radius)',
+              color: '#991B1B',
+            }}>
+              {error}
+            </div>
+          )}
+
+          {!authenticated ? (
+            <Button variant="primary" fullWidth onClick={login}>
+              Sign In to Send Payment
+            </Button>
+          ) : (
+            <Button 
+              variant="primary" 
+              fullWidth
+              onClick={handleSend}
+              disabled={!recipient || !amount || loading}
+            >
+              {loading ? 'Processing...' : (sendType === 'instant' ? 'Send Payment' : 'Start Stream')}
+            </Button>
+          )}
         </div>
       </Card>
+
+      {/* Transaction Status Modal */}
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={sendType === 'instant' ? 'Instant Payment' : 'Stream Payment'}
+      >
+        <div style={{ textAlign: 'center', padding: 'var(--spacing-lg)' }}>
+          {loading && (
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid var(--color-light-gray)',
+              borderTopColor: 'var(--color-accent)',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto var(--spacing-xl)'
+            }} />
+          )}
+          
+          <p style={{
+            fontSize: 'var(--font-size-lg)',
+            marginBottom: 'var(--spacing-xl)',
+            fontWeight: 'var(--font-weight-medium)'
+          }}>
+            {txStatus}
+          </p>
+
+          {txHash && (
+            <div style={{
+              backgroundColor: 'var(--color-light-gray)',
+              padding: 'var(--spacing-md)',
+              borderRadius: 'var(--border-radius)',
+              marginBottom: 'var(--spacing-lg)',
+              wordBreak: 'break-all'
+            }}>
+              <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-xs)', color: '#666' }}>
+                Transaction Hash
+              </div>
+              <div style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}>
+                {txHash.substring(0, 20)}...
+              </div>
+            </div>
+          )}
+
+          {streamId && (
+            <div style={{
+              backgroundColor: 'var(--color-accent)',
+              color: 'white',
+              padding: 'var(--spacing-md)',
+              borderRadius: 'var(--border-radius)',
+              marginBottom: 'var(--spacing-lg)'
+            }}>
+              <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-xs)' }}>
+                Stream ID
+              </div>
+              <div style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-bold)' }}>
+                #{streamId}
+              </div>
+            </div>
+          )}
+
+          {txHash && !loading && (
+            <Button
+              variant="outline"
+              onClick={() => window.open(`https://sepolia.scrollscan.com/tx/${txHash}`, '_blank')}
+              style={{ marginBottom: 'var(--spacing-sm)', width: '100%' }}
+            >
+              View on Scrollscan →
+            </Button>
+          )}
+
+          {!loading && (
+            <Button variant="primary" onClick={closeModal} style={{ width: '100%' }}>
+              Close
+            </Button>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </Modal>
     </div>
   )
 }

@@ -27,11 +27,11 @@ export default function WalletDropdown({ user, logout }) {
         const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
         const contract = getProfileRegistryContract(provider)
         
-        const profileData = await contract.getProfile(address)
+        // Correctly fetch username using the dedicated function
+        const username = await contract.getUsername(address)
         
-        // Parse the profile data (returns: cid, username, exists)
-        if (profileData && profileData[2]) { // exists = true
-          setUsername(profileData[1]) // username
+        if (username) {
+          setUsername(username)
         }
       } catch (error) {
         console.error('Error fetching username:', error)
@@ -94,17 +94,42 @@ export default function WalletDropdown({ user, logout }) {
 
   const exportWallet = async () => {
     try {
-      // Use Privy's built-in wallet export
-      // This opens Privy's modal with export options
+      if (!wallet) {
+        alert('No wallet connected')
+        return
+      }
+
+      // Privy's exportWallet() method opens a secure modal where users can:
+      // 1. Authenticate (if needed)
+      // 2. View their private key
+      // 3. View their recovery phrase (seed phrase/mnemonic)
+      // 4. Download wallet data
+      
       if (wallet.exportWallet) {
+        // This will open Privy's built-in export UI
         await wallet.exportWallet()
       } else {
-        // Fallback: open Privy settings
-        alert('To export your wallet:\n1. Click your wallet address\n2. Select "Export wallet"\n3. Follow the instructions to reveal your private key or recovery phrase')
+        // Fallback for wallets that don't support export
+        alert(
+          '⚠️ Export not available for this wallet type.\n\n' +
+          'If you created your wallet with Privy (embedded wallet), you should be able to export it.\n\n' +
+          'For imported wallets, please use your original wallet provider to access your private key.'
+        )
       }
     } catch (error) {
       console.error('Error exporting wallet:', error)
-      alert('Please use Privy\'s wallet settings to export your private key')
+      
+      // Provide helpful error message
+      if (error.message?.includes('User rejected')) {
+        // User cancelled the export
+        return
+      }
+      
+      alert(
+        '❌ Unable to export wallet\n\n' +
+        'Error: ' + (error.message || 'Unknown error') + '\n\n' +
+        'Please try again or contact support if the issue persists.'
+      )
     }
   }
 
