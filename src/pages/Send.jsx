@@ -11,7 +11,8 @@ import {
   getSigner, 
   createStream, 
   getUSDCContract,
-  sendInstantPayment
+  sendInstantPayment,
+  mintMockUSDC
 } from '../lib/contracts'
 
 export default function Send() {
@@ -90,6 +91,33 @@ export default function Send() {
 
   const handleUsernameSelect = (username, address) => {
     setRecipient(`@${username}`)
+  }
+
+  const handleMint = async () => {
+    if (!authenticated || !wallets.length) {
+      setError('Please sign in to mint test funds')
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError('')
+      setTxStatus('Minting 1,000 mUSDC...')
+      setShowModal(true)
+      
+      const signer = await getSigner(wallets[0])
+      const result = await mintMockUSDC(signer)
+      
+      if (!result.success) throw new Error(result.error)
+      
+      setTxStatus('✅ Successfully minted 1,000 mUSDC!')
+      setTxHash(result.txHash)
+    } catch (e) {
+      setError(e.message)
+      setTxStatus('❌ Minting failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSend = async () => {
@@ -233,6 +261,25 @@ export default function Send() {
             onChange={(e) => setAmount(e.target.value)}
             fullWidth
           />
+          
+          <div style={{ textAlign: 'right', marginTop: '-12px', fontSize: 'var(--font-size-sm)' }}>
+            <span style={{ color: 'var(--color-off-black)' }}>Need test funds? </span>
+            <button 
+              onClick={handleMint}
+              type="button"
+              style={{ 
+                color: 'var(--color-accent)', 
+                background: 'none', 
+                border: 'none', 
+                cursor: 'pointer', 
+                textDecoration: 'underline',
+                fontWeight: 'var(--font-weight-medium)',
+                padding: 0
+              }}
+            >
+              Mint 1,000 mUSDC
+            </button>
+          </div>
 
           {sendType === 'stream' && (
             <Input

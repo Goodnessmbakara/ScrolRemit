@@ -40,6 +40,7 @@ export const USDC_ABI = [
   'function approve(address spender, uint256 amount) external returns (bool)',
   'function allowance(address owner, address spender) external view returns (uint256)',
   'function decimals() external view returns (uint8)',
+  'function mint() external',
   'event Transfer(address indexed from, address indexed to, uint256 value)',
 ]
 
@@ -499,6 +500,27 @@ export async function sendInstantPayment(signer, recipient, amountUSDC) {
     }
   } catch (error) {
     console.error('Error sending payment:', error)
+    return {
+      success: false,
+      error: error.message
+    }
+  }
+}
+
+// Mint Mock USDC (Testnet Faucet)
+export async function mintMockUSDC(signer) {
+  try {
+    const usdcContract = getUSDCContract(signer)
+    
+    const tx = await usdcContract.mint()
+    const receipt = await tx.wait()
+    
+    return {
+      success: true,
+      txHash: receipt.hash
+    }
+  } catch (error) {
+    console.error('Error minting USDC:', error)
     return {
       success: false,
       error: error.message
