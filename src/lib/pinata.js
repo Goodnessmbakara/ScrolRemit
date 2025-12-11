@@ -53,12 +53,15 @@ export async function uploadImage(file, options = {}, onProgress) {
     // Get dedicated gateway URL with optimization
     const gatewayUrl = pinata.config.pinataGateway
 
+    // Pinata SDK v2.5.1 returns 'cid', not 'IpfsHash'
+    console.log('✅ Pinata upload successful:', { cid: upload.cid, id: upload.id })
+
     return {
-      ipfsHash: upload.IpfsHash,
+      ipfsHash: upload.cid,
       cid: upload.cid,
-      url: `https://${gatewayUrl}/ipfs/${upload.IpfsHash}`,
+      url: `https://${gatewayUrl}/ipfs/${upload.cid}`,
       // Optimized image URL with resize and compression
-      optimizedUrl: `https://${gatewayUrl}/ipfs/${upload.IpfsHash}?img-width=500&img-quality=85&img-format=webp`
+      optimizedUrl: `https://${gatewayUrl}/ipfs/${upload.cid}?img-width=500&img-quality=85&img-format=webp`
     }
   } catch (error) {
     console.error('Error uploading image to Pinata:', error)
