@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ethers } from 'ethers'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Card from '../components/Card'
 import Input from '../components/Input'
