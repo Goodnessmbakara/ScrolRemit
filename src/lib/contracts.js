@@ -339,6 +339,11 @@ export async function getUsernameAddress(username) {
     // Get address from username -> address mapping
     const address = await contract.usernameToAddress(cleanUsername)
     
+    // Check for zero address (if username doesn't exist)
+    if (address === ethers.ZeroAddress || address === '0x0000000000000000000000000000000000000000') {
+      return ''
+    }
+    
     return address || ''
   } catch (error) {
     console.error('Error getting address for username:', error)
