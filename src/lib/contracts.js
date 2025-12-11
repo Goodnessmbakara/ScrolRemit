@@ -42,6 +42,15 @@ export const USDC_ABI = [
 ]
 
 /**
+ * Get public JSON-RPC provider for read-only operations
+ * @returns {ethers.JsonRpcProvider} Provider instance
+ */
+export function getPublicProvider() {
+  const rpcUrl = import.meta.env.VITE_RPC_URL || 'https://sepolia-rpc.scroll.io/'
+  return new ethers.JsonRpcProvider(rpcUrl)
+}
+
+/**
  * Get ethers provider from Privy wallet
  * @param {object} wallet - Privy wallet object from useWallets() hook
  */
@@ -136,6 +145,19 @@ export async function setProfileOnChain(cid, username, wallet) {
     const receipt = await tx.wait()
     console.log('✅ Transaction confirmed!')
     
+    // Update local username index for discovery
+    try {
+      const usernameIndex = JSON.parse(localStorage.getItem('usernameIndex') || '[]')
+      // Check if already exists
+      const exists = usernameIndex.some(u => u.address.toLowerCase() === address.toLowerCase())
+      if (!exists) {
+        usernameIndex.push({ username, address })
+        localStorage.setItem('usernameIndex', JSON.stringify(usernameIndex))
+      }
+    } catch (e) {
+      console.warn('Failed to update local username index:', e)
+    }
+    
     return {
       success: true,
       txHash: receipt.hash
@@ -168,9 +190,9 @@ export async function getProfileFromChain(address) {
     }
   }
   
-  // Production path: Read from smart contract
+  // Production path: Read from smart contract using public provider
   try {
-    const provider = await getProvider()
+    const provider = getPublicProvider()
     const contract = getProfileRegistryContract(provider)
     
     const cid = await contract.getProfile(address)
@@ -188,7 +210,7 @@ export async function getProfileFromChain(address) {
  */
 export async function getProfileByUsername(username) {
   try {
-    const provider = await getProvider()
+    const provider = getPublicProvider()
     const contract = getProfileRegistryContract(provider)
     
     const cid = await contract.getProfileByUsername(username)
@@ -206,13 +228,175 @@ export async function getProfileByUsername(username) {
  */
 export async function isUsernameAvailable(username) {
   try {
-    const provider = await getProvider()
+    const provider = getPublicProvider()
     const contract = getProfileRegistryContract(provider)
     
     return await contract.isUsernameAvailable(username)
   } catch (error) {
     console.error('Error checking username availability:', error)
     return false
+  }
+}
+
+/**
+ * Check if an address has a profile
+ * @param {string} address - Address to check
+ * @returns {Promise<boolean>}
+ */
+export async function hasProfile(address) {
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    // Development fallback: check localStorage
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      return !!profiles[address]
+    } catch (error) {
+      console.error('Error checking profile in localStorage:', error)
+      return false
+    }
+  }
+  
+  try {
+    const provider = getPublicProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    return await contract.hasProfile(address)
+  } catch (error) {
+    console.error('Error checking if address has profile:', error)
+    return false
+  }
+}
+
+/**
+ * Get address for a username
+ * @param {string} username - Username to resolve (with or without @ prefix)
+ * @returns {Promise<string>} Address or empty string if not found
+ */
+export async function getUsernameAddress(username) {
+  // Strip @ prefix if present
+  const cleanUsername = username.startsWith('@') ? username.slice(1) : username
+  
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    // Development fallback: search localStorage
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      for (const [address, profile] of Object.entries(profiles)) {
+        if (profile.username === cleanUsername) {
+          return address
+        }
+      }
+      return ''
+    } catch (error) {
+      console.error('Error getting username address from localStorage:', error)
+      return ''
+    }
+  }
+  
+  // Production: Use contract
+  try {
+    const provider = getPublicProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    // Get CID for username (this also validates username exists)
+    const cid = await contract.getProfileByUsername(cleanUsername)
+    if (!cid || cid === '') {
+      return ''
+    }
+    
+    // Get address from username -> address mapping
+    const address = await contract.interface.parseTransaction({
+      data: await contract.usernameToAddress(cleanUsername)
+    })
+    
+    // Simpler approach: query the mapping directly
+    // Note: ProfileRegistry has public usernameToAddress mapping
+    return address || ''
+  } catch (error) {
+    console.error('Error getting address for username:', error)
+    return ''
+  }
+}
+
+/**
+ * Get list of all known usernames (for autocomplete)
+ * @returns {Promise<Array<{username: string, address: string}>>}
+ */
+export async function getAllUsernames() {
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    // Development fallback: read from localStorage
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      const usernames = []
+      for (const [address, profile] of Object.entries(profiles)) {
+        if (profile.username) {
+          usernames.push({
+            username: profile.username,
+            address: address
+          })
+        }
+      }
+      return usernames
+    } catch (error) {
+      console.error('Error getting usernames from localStorage:', error)
+      return []
+    }
+  }
+  
+  // Production: Return usernames from localStorage index
+  // (Updated when profiles are created)
+  try {
+    const usernameIndex = JSON.parse(localStorage.getItem('usernameIndex') || '[]')
+    return usernameIndex
+  } catch (error) {
+    console.error('Error getting username index:', error)
+    return []
+  }
+}
+
+/**
+ * Validate recipient input (address or username)
+ * @param {string} input - User input
+ * @returns {Promise<{valid: boolean, type: 'address'|'username'|'unknown', address: string, error?: string}>}
+ */
+export async function validateRecipient(input) {
+  if (!input || input.trim() === '') {
+    return { valid: false, type: 'unknown', address: '', error: 'Recipient is required' }
+  }
+  
+  const trimmed = input.trim()
+  
+  // Check if it's an Ethereum address
+  if (trimmed.startsWith('0x')) {
+    try {
+      // Validate address format
+      const address = ethers.getAddress(trimmed) // Throws if invalid
+      return { valid: true, type: 'address', address }
+    } catch (error) {
+      return { valid: false, type: 'unknown', address: '', error: 'Invalid Ethereum address' }
+    }
+  }
+  
+  // Assume it's a username
+  const cleanUsername = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed
+  
+  // Validate username format (alphanumeric, hyphens, underscores)
+  const usernameRegex = /^[a-z0-9_-]+$/i
+  if (!usernameRegex.test(cleanUsername)) {
+    return { valid: false, type: 'unknown', address: '', error: 'Invalid username format' }
+  }
+  
+  // Try to resolve username to address
+  const address = await getUsernameAddress(cleanUsername)
+  
+  if (address && address !== '') {
+    return { valid: true, type: 'username', address }
+  } else {
+    return { valid: false, type: 'username', address: '', error: `Username '@${cleanUsername}' not found` }
   }
 }
 
@@ -383,5 +567,46 @@ export async function getTotalStreamableBalance(provider, address) {
   } catch (error) {
     console.error('Error calculating total balance:', error)
     return '0'
+  }
+}
+
+/**
+ * Get distinct number of supporters (unique senders of streams or USDC)
+ * @param {string} address - Profile address to check
+ * @returns {Promise<number>} Number of unique supporters
+ */
+export async function getSupporterCount(address) {
+  if (!address) return 0
+  
+  try {
+    const provider = getPublicProvider()
+    const usdcContract = getUSDCContract(provider)
+    const streamingContract = getStreamingContract(provider)
+    
+    // 1. Get Instant Payment Supporters (USDC Transfers)
+    // Filter: Transfer(from, to, value) -> topic2 is 'to'
+    const transferFilter = usdcContract.filters.Transfer(null, address)
+    const transferEvents = await usdcContract.queryFilter(transferFilter, -10000) // Look back 10k blocks for speed
+    
+    const transferSenders = transferEvents.map(e => e.args[0])
+    
+    // 2. Get Streaming Supporters
+    // Filter: StreamCreated(id, sender, recipient, ...) -> topic3 is 'recipient'
+    const streamFilter = streamingContract.filters.StreamCreated(null, null, address)
+    const streamEvents = await streamingContract.queryFilter(streamFilter, -10000)
+    
+    const streamSenders = streamEvents.map(e => e.args[1])
+    
+    // 3. Aggregate Unique Senders
+    const allSenders = [...transferSenders, ...streamSenders]
+    const uniqueSenders = new Set(allSenders.map(s => s.toLowerCase()))
+    
+    // Exclude self (if user sent to themselves for testing)
+    uniqueSenders.delete(address.toLowerCase())
+    
+    return uniqueSenders.size
+  } catch (error) {
+    console.error(`Error getting supporters for ${address}:`, error)
+    return 0
   }
 }
