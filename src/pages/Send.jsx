@@ -168,17 +168,29 @@ export default function Send() {
 
       // ====== 5. Execute Payment ======
       if (sendType === 'instant') {
-        // Instant Payment
-        setTxStatus('Preparing instant payment...')
+        // Unified Payment Protocol
+        // 1. If sending to SELF: Use Direct Transfer (Contract forbids self-streaming)
+        // 2. If sending to OTHERS: Use 1-second Stream (Unified Dashboard Experience)
         
-        const result = await sendInstantPayment(signer, recipientAddress, amountNum)
-        
-        if (!result.success) {
-          throw new Error(result.error || 'Payment failed')
-        }
+        const isSelfTransfer = recipientAddress.toLowerCase() === senderAddress.toLowerCase()
 
-        setTxHash(result.txHash)
-        setTxStatus('✅ Payment sent successfully!')
+        if (isSelfTransfer) {
+          setTxStatus('Preparing direct transfer (Self)...')
+          const result = await sendInstantPayment(signer, recipientAddress, amountNum)
+          
+          if (!result.success) throw new Error(result.error || 'Payment failed')
+          setTxHash(result.txHash)
+          setTxStatus('✅ Transfer sent successfully!')
+        } else {
+          setTxStatus('Depositing funds (Unified Protocol)...')
+          // Create 1-second stream
+          const result = await createStream(signer, recipientAddress, amountNum, 1, true)
+          
+          if (!result.success) throw new Error(result.error || 'Deposit failed')
+          
+          setTxHash(result.txHash)
+          setTxStatus('✅ Funds deposited successfully! Recipient can claim on dashboard.')
+        }
         
       } else {
         // Streaming Payment

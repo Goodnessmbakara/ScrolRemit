@@ -441,15 +441,14 @@ export async function validateRecipient(input) {
 
 // ============ Streaming Payment Functions ============
 
-// Create a new payment stream
-export async function createStream(signer, recipient, amountUSDC, durationDays) {
+// Create a new stream
+export async function createStream(signer, recipient, amountUSDC, duration, isSeconds = false) {
   try {
-    const streamingContract = getStreamingContract(signer)
     const usdcContract = getUSDCContract(signer)
+    const streamingContract = getStreamingContract(signer)
     
-    // Convert USDC amount to wei (6 decimals for USDC)
     const amount = ethers.parseUnits(amountUSDC.toString(), 6)
-    const duration = durationDays * 24 * 60 * 60 // Convert days to seconds
+    const durationSeconds = isSeconds ? duration : Math.ceil(parseFloat(duration) * 24 * 60 * 60)
     
     // Check allowance
     const currentAllowance = await usdcContract.allowance(
@@ -464,7 +463,7 @@ export async function createStream(signer, recipient, amountUSDC, durationDays) 
     }
     
     // Create stream
-    const tx = await streamingContract.createStream(recipient, amount, duration)
+    const tx = await streamingContract.createStream(recipient, amount, durationSeconds)
     const receipt = await tx.wait()
     
     // Extract streamId from event
