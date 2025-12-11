@@ -3,20 +3,32 @@ import Button from '../components/Button'
 import TickingBalance from '../components/TickingBalance'
 import { useWallets } from '@privy-io/react-auth'
 import { useStreamingBalance } from '../hooks/useBalance'
-import { useStreamingBalance } from '../hooks/useBalance'
-import { getProvider, getSigner, withdrawFromStream } from '../lib/contracts'
-import { useState } from 'react'
+import { getPublicProvider, getSigner, withdrawFromStream } from '../lib/contracts'
+import { useState, useEffect } from 'react'
 
 export default function Dashboard() {
   const { wallets } = useWallets()
   const address = wallets[0]?.address || ''
   
-  // Get provider for useStreamingBalance
-  const provider = wallets[0] ? getProvider() : null
+  // Use public provider for reading data (sync & robust)
+  const provider = getPublicProvider()
   
-  const { balance, streams, totalRate, isStreaming } = useStreamingBalance(provider, address, false)
+  const { balance, streams, totalRate, isStreaming, isLoading } = useStreamingBalance(provider, address, true)
   const [claiming, setClaiming] = useState(false)
   const [claimStatus, setClaimStatus] = useState('')
+  const [totalSupporters, setTotalSupporters] = useState(0)
+
+  useEffect(() => {
+    // Unique senders
+    if (streams.length > 0) {
+      const senders = new Set(streams.map(s => s.sender))
+      setTotalSupporters(senders.size)
+    }
+  }, [streams])
+
+  // Calculate Lifetime Received (sum of withdrawn + claimable part of claimed streams?)
+  // Actually, 'withdrawn' property on stream object tracks what has been claimed.
+  const lifetimeReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.withdrawn || 0), 0)
 
   const handleClaimAll = async () => {
     if (!wallets[0] || claiming) return
@@ -137,7 +149,7 @@ export default function Dashboard() {
                 Active Streams
               </p>
               <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                {streams.length}
+                {streams.filter(s => s.active).length}
               </p>
             </div>
             <div>
@@ -145,7 +157,7 @@ export default function Dashboard() {
                 Total Supporters
               </p>
               <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)' }}>
-                24
+                {totalSupporters}
               </p>
             </div>
             <div>
@@ -153,7 +165,7 @@ export default function Dashboard() {
                 Lifetime Received
               </p>
               <p style={{ fontSize: 'var(--font-size-xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-accent)' }}>
-                $2,450.00
+                ${lifetimeReceived.toFixed(2)}
               </p>
             </div>
           </div>
