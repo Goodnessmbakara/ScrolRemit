@@ -39,6 +39,7 @@ export const USDC_ABI = [
   'function approve(address spender, uint256 amount) external returns (bool)',
   'function allowance(address owner, address spender) external view returns (uint256)',
   'function decimals() external view returns (uint8)',
+  'event Transfer(address indexed from, address indexed to, uint256 value)',
 ]
 
 /**
