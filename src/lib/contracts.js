@@ -32,6 +32,12 @@ export const STREAMING_ABI = [
   'event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 rate, uint256 duration)',
   'event StreamWithdrawn(uint256 indexed streamId, address indexed recipient, uint256 amount)',
   'event StreamCancelled(uint256 indexed streamId)',
+  'error InvalidRecipient()',
+  'error InvalidDeposit()',
+  'error InvalidDuration()',
+  'error StreamNotActive()',
+  'error Unauthorized()',
+  'error NoTokensAvailable()',
 ]
 
 // USDC Token ABI (ERC20)

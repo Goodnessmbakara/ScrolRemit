@@ -152,6 +152,10 @@ export default function Send() {
       const signer = await getSigner(wallets[0])
       const senderAddress = await signer.getAddress()
 
+      if (sendType === 'stream' && recipientAddress.toLowerCase() === senderAddress.toLowerCase()) {
+        throw new Error('You cannot create a stream to yourself')
+      }
+
       // ====== 4. Check USDC Balance ======
       setTxStatus('Checking USDC balance...')
       const usdcContract = getUSDCContract(signer)
