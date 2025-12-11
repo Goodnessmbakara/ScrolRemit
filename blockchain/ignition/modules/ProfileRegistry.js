@@ -1,10 +1,8 @@
-import { buildModule } from '@nomicfoundation/hardhat-ignition/modules'
+const { buildModule } = require("@nomicfoundation/hardhat-ignition/modules")
 
-const ProfileRegistryModule = buildModule('ProfileRegistryModule', (m) => {
+module.exports = buildModule("ProfileRegistryModule", (m) => {
   // Deploy ProfileRegistry contract
-  const profileRegistry = m.contract('ProfileRegistry')
+  const profileRegistry = m.contract("ProfileRegistry", [])
 
   return { profileRegistry }
 })
-
-export default ProfileRegistryModule

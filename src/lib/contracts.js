@@ -4,7 +4,7 @@ import { useWallets } from '@privy-io/react-auth'
 // Contract addresses - UPDATE THESE when deployed to Scroll
 export const CONTRACTS = {
   PROFILE_REGISTRY: import.meta.env.VITE_PROFILE_REGISTRY_ADDRESS || '0x0000000000000000000000000000000000000000',
-  STREAMING_PAYMENT: import.meta.env.VITE_STREAMING_PAYMENT_ADDRESS || '0x0000000000000000000000000000000000000000',
+  STREAMING_PAYMENT: import.meta.env.VITE_STREAMING_CONTRACT_ADDRESS || '0x0000000000000000000000000000000000000000',
   MOCK_USDC: import.meta.env.VITE_MOCK_USDC_ADDRESS || '0x0000000000000000000000000000000000000000',
 }
 
@@ -43,19 +43,24 @@ export const USDC_ABI = [
 
 /**
  * Get ethers provider from Privy wallet
+ * @param {object} wallet - Privy wallet object from useWallets() hook
  */
-export async function getProvider() {
-  if (typeof window.ethereum === 'undefined') {
-    throw new Error('No wallet provider found')
+export async function getProvider(wallet) {
+  if (!wallet) {
+    throw new Error('No Privy wallet provided')
   }
-  return new ethers.BrowserProvider(window.ethereum)
+  // Get EIP-1193 provider from Privy wallet and wrap with BrowserProvider
+  const ethereumProvider = await wallet.getEthereumProvider()
+  const provider = new ethers.BrowserProvider(ethereumProvider)
+  return provider
 }
 
 /**
- * Get ethers signer from Privy wallet
+ * Get ethers signer from Privy wallet  
+ * @param {object} wallet - Privy wallet object from useWallets() hook
  */
-export async function getSigner() {
-  const provider = await getProvider()
+export async function getSigner(wallet) {
+  const provider = await getProvider(wallet)
   return provider.getSigner()
 }
 
@@ -78,9 +83,10 @@ export function getUSDCContract(signerOrProvider) {
  * Set user profile CID on-chain
  * @param {string} cid - IPFS CID of profile metadata
  * @param {string} username - Unique username
+ * @param {object} wallet - Privy wallet object
  * @returns {Promise<{success: boolean, txHash?: string, error?: string}>}
  */
-export async function setProfileOnChain(cid, username) {
+export async function setProfileOnChain(cid, username, wallet) {
   // Check if contract is deployed
   const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
   
@@ -89,7 +95,8 @@ export async function setProfileOnChain(cid, username) {
     // Store in localStorage as fallback for development
     try {
       const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
-      const address = await (await getSigner()).getAddress()
+      const signer = wallet ? await getSigner(wallet) : null
+      const address = signer ? await signer.getAddress() : 'mock-address'
       profiles[address] = { cid, username, createdAt: Date.now() }
       localStorage.setItem('profiles', JSON.stringify(profiles))
       
@@ -108,11 +115,26 @@ export async function setProfileOnChain(cid, username) {
   
   // Production path: Use smart contract
   try {
-    const signer = await getSigner()
+    console.log('📝 Creating profile on-chain...')
+    console.log('Contract address:', CONTRACTS.PROFILE_REGISTRY)
+    console.log('Username:', username)
+    console.log('CID:', cid)
+    
+    console.log('Getting signer from wallet...')
+    const signer = await getSigner(wallet)
+    const address = await signer.getAddress()
+    console.log('Signer address:', address)
+    
+    console.log('Creating contract instance...')
     const contract = getProfileRegistryContract(signer)
     
+    console.log('Calling setProfile on contract...')
     const tx = await contract.setProfile(cid, username)
+    console.log('Transaction sent:', tx.hash)
+    console.log('Waiting for confirmation...')
+    
     const receipt = await tx.wait()
+    console.log('✅ Transaction confirmed!')
     
     return {
       success: true,

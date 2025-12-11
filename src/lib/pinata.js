@@ -46,18 +46,7 @@ export async function uploadImage(file, options = {}, onProgress) {
     if (onProgress) onProgress(0)
 
     // Upload file using Pinata SDK v2.5.1 API
-    const upload = await pinata.upload.file(file, {
-      metadata: {
-        name: options.name || file.name,
-        keyvalues: {
-          type: 'profile-image',
-          category: 'creator',
-          uploadedAt: new Date().toISOString(),
-          ...options.metadata
-        }
-      },
-      groupId: options.groupId, // Optional: organize uploads
-    })
+    const upload = await pinata.upload.public.file(file)
 
     if (onProgress) onProgress(100)
 
@@ -95,18 +84,7 @@ export async function uploadJSON(jsonData, options = {}) {
 
   try {
     // Upload JSON using Pinata SDK v2.5.1 API
-    const upload = await pinata.upload.json(jsonData, {
-      metadata: {
-        name: options.name || 'profile-metadata',
-        keyvalues: {
-          type: 'profile-metadata',
-          category: 'creator',
-          uploadedAt: new Date().toISOString(),
-          ...options.metadata
-        }
-      },
-      groupId: options.groupId,
-    })
+    const upload = await pinata.upload.public.json(jsonData)
 
     const gatewayUrl = pinata.config.pinataGateway
 

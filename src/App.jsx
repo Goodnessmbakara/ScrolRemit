@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { PrivyProvider } from '@privy-io/react-auth'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import ScrollToTop from './components/ScrollToTop'
 import './index.css'
 
 // Lazy load all pages for better performance
@@ -75,6 +76,7 @@ function App() {
       }}
     >
       <Router>
+        <ScrollToTop />
         <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <Navbar />
           <main style={{ flex: 1 }}>

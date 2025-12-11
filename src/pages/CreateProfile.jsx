@@ -15,91 +15,222 @@ export default function CreateProfile() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const pageStyles = {
+    minHeight: '100vh',
+    background: 'linear-gradient(180deg, rgba(0, 47, 167, 0.03) 0%, rgba(255, 255, 255, 1) 100%)',
+    paddingTop: 'var(--spacing-4xl)',
+    paddingBottom: 'var(--spacing-5xl)',
+  }
 
   const containerStyles = {
-    maxWidth: '1200px',
+    maxWidth: '1280px',
     margin: '0 auto',
-    padding: 'var(--spacing-3xl) var(--spacing-lg)',
+    padding: '0 var(--spacing-lg)',
+  }
+
+  const headerWrapperStyles = {
+    textAlign: 'center',
+    marginBottom: 'var(--spacing-4xl)',
   }
 
   const headerStyles = {
-    fontSize: 'var(--font-size-5xl)',
+    fontSize: 'var(--font-size-6xl)',
     fontWeight: 'var(--font-weight-bold)',
-    marginBottom: 'var(--spacing-sm)',
-    textAlign: 'center',
+    marginBottom: 'var(--spacing-md)',
+    background: 'linear-gradient(135deg, var(--color-black) 0%, var(--color-accent) 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
   }
 
   const subheadStyles = {
-    fontSize: 'var(--font-size-lg)',
+    fontSize: 'var(--font-size-xl)',
     color: 'var(--color-off-black)',
-    marginBottom: 'var(--spacing-3xl)',
-    textAlign: 'center',
+    maxWidth: '600px',
+    margin: '0 auto',
+    lineHeight: '1.6',
   }
 
   const splitLayoutStyles = {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 'var(--spacing-3xl)',
+    gridTemplateColumns: '1.2fr 1fr',
+    gap: 'var(--spacing-4xl)',
     alignItems: 'start',
   }
 
-  const previewCardStyles = {
-    position: 'sticky',
-    top: 'var(--spacing-2xl)',
-    background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
-    padding: 'var(--spacing-2xl)',
-    borderRadius: '16px',
+  const formCardStyles = {
+    background: 'rgba(255, 255, 255, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '24px',
     border: '2px solid var(--color-black)',
-    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.08)',
+    padding: 'var(--spacing-3xl)',
+    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
+    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  }
+
+  const previewContainerStyles = {
+    position: 'sticky',
+    top: 'var(--spacing-3xl)',
+  }
+
+  const previewCardStyles = {
+    background: 'linear-gradient(135deg, rgba(0, 47, 167, 0.05) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(0, 47, 167, 0.05) 100%)',
+    backdropFilter: 'blur(20px)',
+    padding: 'var(--spacing-3xl)',
+    borderRadius: '28px',
+    border: '3px solid var(--color-black)',
+    boxShadow: '0 24px 48px rgba(0, 47, 167, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+    position: 'relative',
+    overflow: 'hidden',
+  }
+
+  const previewLabelStyles = {
+    fontSize: 'var(--font-size-sm)',
+    fontWeight: 'var(--font-weight-semibold)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    color: 'var(--color-accent)',
+    marginBottom: 'var(--spacing-xl)',
+    textAlign: 'center',
   }
 
   const uploadBoxStyles = {
-    border: '3px dashed var(--color-accent)',
-    borderRadius: '12px',
+    border: isDragging ? '3px solid var(--color-accent)' : '3px dashed #CBD5E0',
+    borderRadius: '16px',
     padding: 'var(--spacing-3xl)',
     textAlign: 'center',
     cursor: 'pointer',
     position: 'relative',
     overflow: 'hidden',
-    transition: 'all var(--transition-base)',
-    backgroundColor: 'rgba(0, 47, 167, 0.02)',
+    transition: 'all 0.3s ease',
+    backgroundColor: isDragging ? 'rgba(0, 47, 167, 0.08)' : 'rgba(0, 47, 167, 0.02)',
+    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+  }
+
+  const uploadIconWrapperStyles = {
+    width: '80px',
+    height: '80px',
+    margin: '0 auto var(--spacing-lg)',
+    background: 'linear-gradient(135deg, var(--color-accent) 0%, #0047D1 100%)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 'var(--font-size-4xl)',
+    boxShadow: '0 10px 30px rgba(0, 47, 167, 0.3)',
+    transition: 'transform 0.3s ease',
+  }
+
+  const imagePreviewContainerStyles = {
+    position: 'relative',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+  }
+
+  const previewImageWrapperStyles = {
+    width: '220px',
+    height: '220px',
+    margin: '0 auto var(--spacing-xl)',
+    position: 'relative',
   }
 
   const previewImageStyles = {
-    width: '200px',
-    height: '200px',
+    width: '100%',
+    height: '100%',
     borderRadius: '50%',
     objectFit: 'cover',
-    margin: '0 auto var(--spacing-lg)',
-    border: '4px solid var(--color-accent)',
-    boxShadow: '0 4px 12px rgba(0, 47, 167, 0.2)',
+    border: '5px solid var(--color-accent)',
+    boxShadow: '0 10px 40px rgba(0, 47, 167, 0.3), 0 0 0 10px rgba(0, 47, 167, 0.05)',
+    animation: 'fadeIn 0.5s ease',
+  }
+
+  const previewPlaceholderStyles = {
+    width: '220px',
+    height: '220px',
+    margin: '0 auto var(--spacing-xl)',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #E2E8F0 0%, #CBD5E0 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 'var(--font-size-6xl)',
+    border: '5px solid #CBD5E0',
   }
 
   const previewNameStyles = {
-    fontSize: 'var(--font-size-3xl)',
+    fontSize: 'var(--font-size-4xl)',
     fontWeight: 'var(--font-weight-bold)',
-    marginBottom: 'var(--spacing-sm)',
+    marginBottom: 'var(--spacing-md)',
     textAlign: 'center',
+    color: 'var(--color-black)',
   }
 
   const previewBioStyles = {
-    fontSize: 'var(--font-size-base)',
+    fontSize: 'var(--font-size-lg)',
     color: 'var(--color-off-black)',
-    marginBottom: 'var(--spacing-xl)',
+    marginBottom: 'var(--spacing-2xl)',
     textAlign: 'center',
-    lineHeight: '1.6',
+    lineHeight: '1.8',
+    minHeight: '60px',
   }
 
   const buttonGroupStyles = {
     display: 'flex',
     gap: 'var(--spacing-md)',
     justifyContent: 'center',
+    marginTop: 'var(--spacing-xl)',
+  }
+
+  const labelStyles = {
+    display: 'block',
+    marginBottom: 'var(--spacing-sm)',
+    fontSize: 'var(--font-size-base)',
+    fontWeight: 'var(--font-weight-semibold)',
+    color: 'var(--color-black)',
+  }
+
+  const textareaStyles = {
+    width: '100%',
+    padding: 'var(--spacing-lg)',
+    fontSize: 'var(--font-size-base)',
+    fontFamily: 'var(--font-family)',
+    border: '2px solid var(--color-black)',
+    borderRadius: 'var(--border-radius)',
+    outline: 'none',
+    resize: 'vertical',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    lineHeight: '1.6',
+  }
+
+  const progressBarContainerStyles = {
+    width: '100%',
+    height: '12px',
+    backgroundColor: '#E2E8F0',
+    borderRadius: '6px',
+    overflow: 'hidden',
+    marginBottom: 'var(--spacing-md)',
+    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+  }
+
+  const progressBarFillStyles = {
+    height: '100%',
+    background: 'linear-gradient(90deg, var(--color-accent) 0%, #0047D1 100%)',
+    transition: 'width 0.3s ease',
+    borderRadius: '6px',
+    boxShadow: '0 0 10px rgba(0, 47, 167, 0.5)',
   }
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
 
+    processFile(file)
+  }
+
+  const processFile = (file) => {
     // Validate file
     const validation = validateFile(file)
     if (!validation.valid) {
@@ -116,6 +247,26 @@ export default function CreateProfile() {
       setImagePreview(reader.result)
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files[0]
+    if (file && file.type.startsWith('image/')) {
+      processFile(file)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -178,7 +329,7 @@ export default function CreateProfile() {
       const username = name.toLowerCase().replace(/\s+/g, '-') // Convert to username format
       
       const { setProfileOnChain } = await import('../lib/contracts')
-      const result = await setProfileOnChain(metadataResult.cid, username)
+      const result = await setProfileOnChain(metadataResult.cid, username, wallets[0])
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to store profile on blockchain')
@@ -192,9 +343,17 @@ export default function CreateProfile() {
       console.log('TX Hash:', result.txHash)
       console.log('Username:', username)
       
-      const successMessage = result.isMock
-        ? `✅ Profile created in Development Mode!\n\nUsername: ${username}\n\nNote: This is stored locally. Deploy the ProfileRegistry contract for permanent blockchain storage.`
-        : `✅ Profile created on Blockchain!\n\nUsername: ${username}\nTransaction: ${result.txHash}\n\nYour profile is now permanently stored and will load automatically on re-login.`
+      let successMessage
+      if (result.needsGas) {
+        // No gas available - profile saved locally
+        successMessage = `✅ Profile Created (Saved Locally)!\n\nUsername: ${username}\n\n⚠️ Your wallet needs Scroll Sepolia ETH for gas to save permanently on-chain.\n\n🔗 Get free testnet ETH:\nhttps://sepolia.scroll.io/faucet\n\nYour profile works now and will upgrade to blockchain automatically when you have gas!`
+      } else if (result.isMock) {
+        // Contract not deployed fallback
+        successMessage = `✅ Profile created in Development Mode!\n\nUsername: ${username}\n\nNote: This is stored locally. Deploy the ProfileRegistry contract for permanent blockchain storage.`
+      } else {
+        // Success - on blockchain
+        successMessage = `✅ Profile created on Blockchain!\n\nUsername: ${username}\nTransaction: ${result.txHash}\n\nYour profile is now permanently stored and will load automatically on re-login.`
+      }
       
       alert(successMessage)
       
@@ -213,175 +372,195 @@ export default function CreateProfile() {
   }
 
   return (
-    <div style={containerStyles}>
-      <h1 style={headerStyles}>Create Your Profile</h1>
-      <p style={subheadStyles}>
-        Set up your creator profile to start receiving support from around the world.
-      </p>
+    <div style={pageStyles}>
+      <div style={containerStyles}>
+        <div style={headerWrapperStyles}>
+          <h1 style={headerStyles}>Create Your Profile</h1>
+          <p style={subheadStyles}>
+            Set up your creator profile to start receiving support from around the world.
+          </p>
+        </div>
 
-      <div style={splitLayoutStyles}>
-        {/* Left: Form */}
-        <Card padding="xl">
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-xl)' }}>
-            <Input
-              label="Display Name *"
-              placeholder="Your name or artist name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-            />
+        <div style={splitLayoutStyles}>
+          {/* Left: Form */}
+          <div style={formCardStyles}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2xl)' }}>
+              <Input
+                label="Display Name *"
+                placeholder="Your name or artist name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                fullWidth
+              />
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: 'var(--spacing-sm)',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-              }}>
-                Bio
-              </label>
-              <textarea
-                placeholder="Tell supporters about your work..."
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={6}
-                style={{
-                  width: '100%',
-                  padding: 'var(--spacing-md)',
+              <div>
+                <label style={labelStyles}>
+                  Bio
+                </label>
+                <textarea
+                  placeholder="Tell supporters about your work..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={6}
+                  style={textareaStyles}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = 'var(--color-accent)'
+                    e.target.style.boxShadow = '0 0 0 3px rgba(0, 47, 167, 0.1)'
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'var(--color-black)'
+                    e.target.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyles}>
+                  Profile Photo
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                  id="profile-image-upload"
+                />
+                <label 
+                  htmlFor="profile-image-upload" 
+                  style={uploadBoxStyles}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onMouseEnter={(e) => {
+                    if (!imagePreview && !isDragging) {
+                      e.currentTarget.style.borderColor = 'var(--color-accent)'
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 47, 167, 0.05)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!imagePreview && !isDragging) {
+                      e.currentTarget.style.borderColor = '#CBD5E0'
+                      e.currentTarget.style.backgroundColor = 'rgba(0, 47, 167, 0.02)'
+                    }
+                  }}
+                >
+                  {imagePreview ? (
+                    <div style={imagePreviewContainerStyles}>
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        style={{ width: '100%', maxHeight: '320px', objectFit: 'contain', display: 'block' }}
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={uploadIconWrapperStyles}>
+                        <span>📸</span>
+                      </div>
+                      <p style={{ fontSize: 'var(--font-size-xl)', marginBottom: 'var(--spacing-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-black)' }}>
+                        Drop your photo here
+                      </p>
+                      <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-off-black)', marginBottom: 'var(--spacing-sm)' }}>
+                        or click to browse
+                      </p>
+                      <p style={{ fontSize: 'var(--font-size-sm)', color: '#718096' }}>
+                        JPG, PNG or GIF • Max 10MB
+                      </p>
+                    </div>
+                  )}
+                </label>
+              </div>
+
+              {error && (
+                <div style={{
+                  padding: 'var(--spacing-lg)',
+                  backgroundColor: '#FEE2E2',
+                  border: '2px solid #EF4444',
+                  borderRadius: '12px',
+                  color: '#991B1B',
                   fontSize: 'var(--font-size-base)',
-                  fontFamily: 'var(--font-family)',
-                  border: 'var(--border-width) solid var(--color-black)',
-                  borderRadius: 'var(--border-radius)',
-                  outline: 'none',
-                  resize: 'vertical',
-                }}
-              />
-            </div>
+                  fontWeight: 'var(--font-weight-medium)',
+                }}>
+                  ⚠️ {error}
+                </div>
+              )}
 
-            <div>
-              <label style={{
-                display: 'block',
-                marginBottom: 'var(--spacing-sm)',
-                fontSize: 'var(--font-size-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-              }}>
-                Profile Photo
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                style={{ display: 'none' }}
-                id="profile-image-upload"
-              />
-              <label htmlFor="profile-image-upload" style={uploadBoxStyles}>
-                {imagePreview ? (
+              {uploading && (
+                <div>
+                  <div style={progressBarContainerStyles}>
+                    <div style={{ ...progressBarFillStyles, width: `${uploadProgress}%` }} />
+                  </div>
+                  <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-accent)', textAlign: 'center', fontWeight: 'var(--font-weight-semibold)' }}>
+                    Creating your profile... {uploadProgress}%
+                  </p>
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                variant="primary" 
+                fullWidth
+                disabled={uploading || !authenticated}
+              >
+                {uploading ? '✨ Creating Profile...' : '🚀 Create Profile'}
+              </Button>
+
+              {!authenticated && (
+                <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-off-black)', textAlign: 'center' }}>
+                  Please <button onClick={login} style={{ color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontWeight: 'var(--font-weight-semibold)' }}>sign in</button> to create your profile
+                </p>
+              )}
+            </form>
+          </div>
+
+          {/* Right: Preview */}
+          <div style={previewContainerStyles}>
+            <div style={previewCardStyles}>
+              <div style={previewLabelStyles}>
+                Preview
+              </div>
+              
+              {imagePreview ? (
+                <div style={previewImageWrapperStyles}>
                   <img 
                     src={imagePreview} 
-                    alt="Preview" 
-                    style={{ width: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '8px' }}
+                    alt="Profile" 
+                    style={previewImageStyles}
                   />
-                ) : (
-                  <div style={{ padding: 'var(--spacing-2xl)' }}>
-                    <p style={{ fontSize: 'var(--font-size-2xl)', marginBottom: 'var(--spacing-sm)', color: 'var(--color-accent)' }}>
-                      📷
-                    </p>
-                    <p style={{ fontSize: 'var(--font-size-lg)', marginBottom: 'var(--spacing-xs)', fontWeight: 'var(--font-weight-medium)' }}>
-                      Click to upload
-                    </p>
-                    <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)' }}>
-                      JPG, PNG or GIF (max 10MB)
-                    </p>
-                  </div>
-                )}
-              </label>
-            </div>
-
-            {error && (
-              <div style={{
-                padding: 'var(--spacing-md)',
-                backgroundColor: '#ffebee',
-                border: '1px solid #ef5350',
-                borderRadius: 'var(--border-radius)',
-               color: '#c62828',
-                fontSize: 'var(--font-size-sm)',
-              }}>
-                {error}
-              </div>
-            )}
-
-            {uploading && (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: '100%',
-                  height: '8px',
-                  backgroundColor: '#e0e0e0',
-                  borderRadius: '4px',
-                  overflow: 'hidden',
-                  marginBottom: 'var(--spacing-sm)',
-                }}>
-                  <div style={{
-                    width: `${uploadProgress}%`,
-                    height: '100%',
-                    backgroundColor: 'var(--color-accent)',
-                    transition: 'width 0.3s ease',
-                  }} />
                 </div>
-                <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)' }}>
-                  Uploading... {uploadProgress}%
-                </p>
-              </div>
-            )}
-
-            <Button 
-              type="submit" 
-              variant="primary" 
-              fullWidth
-              disabled={uploading || !authenticated}
-            >
-              {uploading ? 'Creating Profile...' : 'Create Profile'}
-            </Button>
-
-            {!authenticated && (
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)', textAlign: 'center' }}>
-                Please <button onClick={login} style={{ color: 'var(--color-accent)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>sign in</button> to create your profile
+              ) : (
+                <div style={previewPlaceholderStyles}>
+                  👤
+                </div>
+              )}
+              
+              <h2 style={previewNameStyles}>
+                {name || 'Your Name'}
+              </h2>
+              
+              <p style={previewBioStyles}>
+                {bio || 'Your bio will appear here...'}
               </p>
-            )}
-          </form>
-        </Card>
-
-        {/* Right: Preview */}
-        <div style={previewCardStyles}>
-          <h3 style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', marginBottom: 'var(--spacing-xl)', textAlign: 'center', color: 'var(--color-off-black)' }}>
-            Live Preview
-          </h3>
-          
-          {imagePreview && (
-            <img 
-              src={imagePreview} 
-              alt="Profile" 
-              style={previewImageStyles}
-            />
-          )}
-          
-          <h2 style={previewNameStyles}>
-            {name || 'Your Name'}
-          </h2>
-          
-          <p style={previewBioStyles}>
-            {bio || 'Your bio will appear here...'}
-          </p>
-          
-          <div style={buttonGroupStyles}>
-            <Button variant="primary">
-              Send Tip
-            </Button>
-            <Button variant="outline">
-              Start Stream
-            </Button>
+              
+              <div style={buttonGroupStyles}>
+                <Button variant="primary">
+                  💸 Send Tip
+                </Button>
+                <Button variant="outline">
+                  📺 Start Stream
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   )
 }
