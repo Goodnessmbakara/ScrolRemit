@@ -315,6 +315,20 @@ export default function Send() {
             {txStatus}
           </p>
 
+          {error && (
+            <div style={{
+              color: '#EF4444',
+              backgroundColor: '#FEF2F2',
+              padding: 'var(--spacing-md)',
+              borderRadius: 'var(--border-radius)',
+              marginBottom: 'var(--spacing-lg)',
+              fontSize: 'var(--font-size-sm)',
+              border: '1px solid #FECACA'
+            }}>
+              {error}
+            </div>
+          )}
+
           {txHash && (
             <div style={{
               backgroundColor: 'var(--color-light-gray)',
