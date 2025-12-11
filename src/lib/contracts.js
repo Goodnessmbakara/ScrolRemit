@@ -16,6 +16,7 @@ export const PROFILE_REGISTRY_ABI = [
   'function getUsername(address user) external view returns (string memory)',
   'function isUsernameAvailable(string calldata username) external view returns (bool)',
   'function hasProfile(address user) external view returns (bool)',
+  'function usernameToAddress(string calldata username) external view returns (address)',
   'function deleteProfile() external',
   'event ProfileUpdated(address indexed user, string cid, string username, uint256 timestamp)',
 ]
@@ -336,12 +337,8 @@ export async function getUsernameAddress(username) {
     }
     
     // Get address from username -> address mapping
-    const address = await contract.interface.parseTransaction({
-      data: await contract.usernameToAddress(cleanUsername)
-    })
+    const address = await contract.usernameToAddress(cleanUsername)
     
-    // Simpler approach: query the mapping directly
-    // Note: ProfileRegistry has public usernameToAddress mapping
     return address || ''
   } catch (error) {
     console.error('Error getting address for username:', error)
