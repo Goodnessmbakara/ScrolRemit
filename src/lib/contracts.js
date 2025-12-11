@@ -239,6 +239,34 @@ export async function isUsernameAvailable(username) {
 }
 
 /**
+ * Get username for an address
+ * @param {string} address - Address to query
+ * @returns {Promise<string>} Username or empty string
+ */
+export async function getUsername(address) {
+  const isContractDeployed = CONTRACTS.PROFILE_REGISTRY !== '0x0000000000000000000000000000000000000000'
+  
+  if (!isContractDeployed) {
+    try {
+      const profiles = JSON.parse(localStorage.getItem('profiles') || '{}')
+      return profiles[address]?.username || ''
+    } catch (error) {
+      console.error('Error reading profile from localStorage:', error)
+      return ''
+    }
+  }
+  
+  try {
+    const provider = getPublicProvider()
+    const contract = getProfileRegistryContract(provider)
+    return await contract.getUsername(address)
+  } catch (error) {
+    console.error('Error getting username:', error)
+    return ''
+  }
+}
+
+/**
  * Check if an address has a profile
  * @param {string} address - Address to check
  * @returns {Promise<boolean>}
