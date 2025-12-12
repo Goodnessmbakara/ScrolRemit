@@ -361,6 +361,7 @@ export async function getUsernameAddress(username) {
 
 /**
  * Get list of all known usernames (for autocomplete)
+ * Now queries blockchain events to get ALL profiles globally
  * @returns {Promise<Array<{username: string, address: string}>>}
  */
 export async function getAllUsernames() {
@@ -386,13 +387,30 @@ export async function getAllUsernames() {
     }
   }
   
-  // Production: Return usernames from localStorage index
-  // (Updated when profiles are created)
+  // Production: Query blockchain for all ProfileUpdated events
   try {
-    const usernameIndex = JSON.parse(localStorage.getItem('usernameIndex') || '[]')
-    return usernameIndex
+    const provider = getPublicProvider()
+    const contract = getProfileRegistryContract(provider)
+    
+    // Query ProfileUpdated events (global, not filtered by address)
+    const filter = contract.filters.ProfileUpdated()
+    const events = await contract.queryFilter(filter, -1000000) // Look back ~1M blocks
+    
+    // Extract unique profiles (latest update per address)
+    const profileMap = new Map()
+    for (const event of events) {
+      const { user, username } = event.args
+      // Keep the most recent profile for each address
+      profileMap.set(user.toLowerCase(), {
+        username,
+        address: user
+      })
+    }
+    
+    return Array.from(profileMap.values())
   } catch (error) {
-    console.error('Error getting username index:', error)
+    console.error('Error getting usernames from blockchain:', error)
+    // Fallback to empty array if blockchain query fails
     return []
   }
 }
