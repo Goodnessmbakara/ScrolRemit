@@ -80,8 +80,13 @@ export default function PublicProfile() {
     loadProfile()
   }, [loadProfile])
 
-  // Calculate total received from withdrawn streams
-  const totalReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.withdrawn || 0), 0)
+  // Calculate total received (deposited, not withdrawn!)
+  // This shows what supporters have SENT, not what creator has CLAIMED
+  const totalReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.deposit || 0), 0)
+
+  // Get unique supporters and recent activity
+  const uniqueSupporters = [...new Set(streams.map(s => s.sender))].filter(Boolean)
+  const recentSupporters = uniqueSupporters.slice(-3).reverse() // Last 3 supporters
 
   const handleSendTip = () => {
     // Use URL params for reliable data passing (survives refresh)
