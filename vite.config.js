@@ -2,10 +2,42 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
+// Custom plugin to stub out Solana dependencies we don't use
+const stubSolanaPlugin = () => {
+  const stubCode = `
+    export default {};
+    export const getTransferSolInstruction = () => {};
+    export const getAssociatedTokenAddressSync = () => {};
+    export const createTransferInstruction = () => {};
+    export const Connection = class {};
+    export const PublicKey = class {};
+    export const Transaction = class {};
+    export const SystemProgram = {};
+    export const LAMPORTS_PER_SOL = 1000000000;
+  `
+  
+  return {
+    name: 'stub-solana',
+    resolveId(id) {
+      // Intercept any @solana imports and mark them for stubbing
+      if (id.includes('@solana') || id.includes('solana-program')) {
+        return '\0' + id // Virtual module prefix
+      }
+    },
+    load(id) {
+      // Provide empty stub for virtual Solana modules
+      if (id.startsWith('\0') && (id.includes('@solana') || id.includes('solana-program'))) {
+        return stubCode
+      }
+    }
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    stubSolanaPlugin(), // Add our custom plugin
     nodePolyfills({
       // Enable polyfills for specific Node.js globals and modules
       globals: {
@@ -22,38 +54,35 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     rollupOptions: {
-      // Externalize Solana dependencies during build
-      external: (id) => {
-        return id.includes('@solana') || id.includes('solana-program')
-      },
       output: {
-        // Provide globals for externalized modules
-        globals: {
-          '@solana-program/system': 'SolanaSystem',
-          '@solana/web3.js': 'SolanaWeb3',
-        },
-        // Manual chunks to isolate problematic code
+        // Manual chunks to isolate Solana code from Privy that we don't use
         manualChunks(id) {
-          // Isolate Privy's Solana-related code into separate chunk that won't be loaded
+          // Isolate Privy's Solana-related code into separate chunk
           if (id.includes('FundSolWallet') || id.includes('Solana')) {
             return 'solana-unused'
           }
         }
       },
       onwarn(warning, warn) {
-        // Suppress warnings about externalized modules and PURE annotations
-        if (warning.code === 'UNRESOLVED_IMPORT' && 
-            (warning.message.includes('@solana') || warning.message.includes('solana-program'))) {
-          return
-        }
+        // Suppress warnings about PURE annotations and Solana modules
         if (warning.code === 'PLUGIN_WARNING' && warning.message.includes('/*#__PURE__*/')) {
           return
+        }
+        // Suppress module resolution warnings for optional Solana deps
+        if (warning.code === 'UNRESOLVED_IMPORT' && warning.message.includes('@solana')) {
+          return  
         }
         warn(warning)
       }
     }
   },
   optimizeDeps: {
+    exclude: [
+      '@solana/web3.js',
+      '@solana/kit',
+      '@solana-program/system',
+      '@solana-program/token',
+    ],
     esbuildOptions: {
       define: {
         global: 'globalThis',
