@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -20,11 +20,7 @@ export default function PublicProfile() {
   const provider = getPublicProvider()
   const { streams } = useStreamingBalance(provider, userAddress, false)
 
-  useEffect(() => {
-    loadProfile()
-  }, [username])
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -77,7 +73,11 @@ export default function PublicProfile() {
       setError('Failed to load profile')
       setLoading(false)
     }
-  }
+  }, [username])
+
+  useEffect(() => {
+    loadProfile()
+  }, [loadProfile])
 
   // Calculate total received from withdrawn streams
   const totalReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.withdrawn || 0), 0)
