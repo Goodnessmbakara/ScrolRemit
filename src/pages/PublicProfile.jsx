@@ -156,27 +156,30 @@ export default function PublicProfile() {
 
   return (
     <div style={{
-      maxWidth: '800px',
+      maxWidth: '700px',
       margin: '0 auto',
       padding: 'var(--spacing-3xl) var(--spacing-lg)',
     }}>
-      {/* Profile Header */}
+      {/* Compact Header - Image inline with name */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '200px 1fr',
-        gap: 'var(--spacing-2xl)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 'var(--spacing-lg)',
         marginBottom: 'var(--spacing-3xl)',
-      }} className="profile-header">
-        {/* Profile Image - Square with border */}
+        paddingBottom: 'var(--spacing-xl)',
+        borderBottom: 'var(--border-width) solid var(--color-black)',
+      }}>
+        {/* Small square avatar */}
         {profileData.imageUrl ? (
           <img 
             src={profileData.imageUrl} 
             alt={profileData.name || username}
             style={{
-              width: '200px',
-              height: '200px',
+              width: '80px',
+              height: '80px',
               objectFit: 'cover',
               border: 'var(--border-width) solid var(--color-black)',
+              flexShrink: 0,
             }}
             onError={(e) => {
               e.target.style.display = 'none'
@@ -185,124 +188,128 @@ export default function PublicProfile() {
           />
         ) : (
           <div style={{
-            width: '200px',
-            height: '200px',
+            width: '80px',
+            height: '80px',
             border: 'var(--border-width) solid var(--color-black)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 'var(--font-size-6xl)',
+            fontSize: 'var(--font-size-3xl)',
             fontWeight: 'var(--font-weight-bold)',
             backgroundColor: 'var(--color-white)',
+            flexShrink: 0,
           }}>
             {(profileData.name || username).charAt(0).toUpperCase()}
           </div>
         )}
         {/* Fallback for broken image */}
         <div style={{
-          width: '200px',
-          height: '200px',
+          width: '80px',
+          height: '80px',
           border: 'var(--border-width) solid var(--color-black)',
           display: 'none',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 'var(--font-size-6xl)',
+          fontSize: 'var(--font-size-3xl)',
           fontWeight: 'var(--font-weight-bold)',
           backgroundColor: 'var(--color-white)',
+          flexShrink: 0,
         }}>
           {(profileData.name || username).charAt(0).toUpperCase()}
         </div>
 
-        {/* Profile Info */}
-        <div>
+        {/* Name and bio */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{
             fontSize: 'var(--font-size-4xl)',
             fontWeight: 'var(--font-weight-semibold)',
             marginBottom: 'var(--spacing-xs)',
+            lineHeight: '1.1',
           }}>
             {profileData.name || username}
           </h1>
           <p style={{
-            fontSize: 'var(--font-size-lg)',
+            fontSize: 'var(--font-size-base)',
             color: 'var(--color-off-black)',
-            marginBottom: 'var(--spacing-lg)',
+            marginBottom: profileData.bio ? 'var(--spacing-sm)' : '0',
           }}>
             @{username}
           </p>
           {profileData.bio && (
             <p style={{
-              fontSize: 'var(--font-size-base)',
-              lineHeight: '1.6',
-              color: 'var(--color-black)',
-              marginBottom: 'var(--spacing-xl)',
+              fontSize: 'var(--font-size-sm)',
+              lineHeight: '1.5',
+              color: 'var(--color-off-black)',
             }}>
               {profileData.bio}
             </p>
           )}
-
-          {/* Action Buttons */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 'var(--spacing-md)',
-          }} className="cta-grid">
-            <button
-              onClick={handleSendTip}
-              style={{
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-white)',
-                backgroundColor: 'var(--color-accent)',
-                border: 'var(--border-width) solid var(--color-black)',
-                cursor: 'pointer',
-                transition: 'opacity var(--transition-fast)',
-              }}
-              onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
-              onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
-            >
-              Send Tip
-            </button>
-            <button
-              onClick={handleStartStream}
-              style={{
-                padding: 'var(--spacing-md) var(--spacing-lg)',
-                fontSize: 'var(--font-size-base)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'var(--color-black)',
-                backgroundColor: 'var(--color-white)',
-                border: 'var(--border-width) solid var(--color-black)',
-                cursor: 'pointer',
-                transition: 'transform var(--transition-base)',
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
-              Start Stream
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Prominent Full-Width CTAs */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
-        gap: 'var(--spacing-lg)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacing-md)',
         marginBottom: 'var(--spacing-3xl)',
-      }} className="stats-grid">
+      }}>
+        <button
+          onClick={handleSendTip}
+          style={{
+            padding: 'var(--spacing-lg) var(--spacing-xl)',
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-white)',
+            backgroundColor: 'var(--color-accent)',
+            border: 'var(--border-width) solid var(--color-black)',
+            cursor: 'pointer',
+            transition: 'opacity var(--transition-fast)',
+            width: '100%',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+          onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+        >
+          Send Tip
+        </button>
+        <button
+          onClick={handleStartStream}
+          style={{
+            padding: 'var(--spacing-lg) var(--spacing-xl)',
+            fontSize: 'var(--font-size-lg)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-black)',
+            backgroundColor: 'var(--color-white)',
+            border: 'var(--border-width) solid var(--color-black)',
+            cursor: 'pointer',
+            transition: 'transform var(--transition-base)',
+            width: '100%',
+          }}
+          onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
+          onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
+        >
+          Start Stream
+        </button>
+      </div>
+
+      {/* Horizontal Stats Bar */}
+      <div style={{
+        display: 'flex',
+        border: 'var(--border-width) solid var(--color-black)',
+        marginBottom: 'var(--spacing-2xl)',
+      }}>
         <div style={{
+          flex: 1,
           padding: 'var(--spacing-lg)',
-          border: 'var(--border-width) solid var(--color-black)',
+          borderRight: 'var(--border-width) solid var(--color-black)',
         }}>
           <p style={{
-            fontSize: 'var(--font-size-sm)',
+            fontSize: 'var(--font-size-xs)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
             color: 'var(--color-off-black)',
-            marginBottom: 'var(--spacing-sm)',
+            marginBottom: 'var(--spacing-xs)',
+            fontWeight: 'var(--font-weight-medium)',
           }}>
             Supporters
           </p>
@@ -314,19 +321,22 @@ export default function PublicProfile() {
           </p>
         </div>
         <div style={{
+          flex: 1,
           padding: 'var(--spacing-lg)',
-          border: 'var(--border-width) solid var(--color-black)',
         }}>
           <p style={{
-            fontSize: 'var(--font-size-sm)',
+            fontSize: 'var(--font-size-xs)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
             color: 'var(--color-off-black)',
-            marginBottom: 'var(--spacing-sm)',
+            marginBottom: 'var(--spacing-xs)',
+            fontWeight: 'var(--font-weight-medium)',
           }}>
             Total Received
           </p>
           <p style={{
             fontSize: 'var(--font-size-2xl)',
-            fontWeight: 'var(--font-weight-semibold)',
+            fontWeight: 'var(--font-weight-bold)',
             color: 'var(--color-accent)',
           }}>
             ${totalReceived.toFixed(2)}
@@ -334,51 +344,73 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {/* Support Info Card */}
+      {/* Recent Supporters Section */}
+      {recentSupporters.length > 0 && (
+        <div style={{
+          padding: 'var(--spacing-lg)',
+          border: 'var(--border-width) solid var(--color-black)',
+          marginBottom: 'var(--spacing-2xl)',
+        }}>
+          <h3 style={{
+            fontSize: 'var(--font-size-sm)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            fontWeight: 'var(--font-weight-semibold)',
+            marginBottom: 'var(--spacing-md)',
+          }}>
+            Recent Supporters
+          </h3>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-sm)',
+          }}>
+            {recentSupporters.map((supporter, index) => (
+              <div key={index} style={{
+                fontSize: 'var(--font-size-sm)',
+                fontFamily: 'monospace',
+                color: 'var(--color-off-black)',
+                padding: 'var(--spacing-xs) 0',
+                borderBottom: index < recentSupporters.length - 1 ? '1px solid var(--color-off-black)' : 'none',
+              }}>
+                {supporter.slice(0, 6)}...{supporter.slice(-4)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* About Section */}
       <div style={{
-        padding: 'var(--spacing-xl)',
+        padding: 'var(--spacing-lg)',
         border: 'var(--border-width) solid var(--color-black)',
       }}>
         <h3 style={{
-          fontSize: 'var(--font-size-2xl)',
+          fontSize: 'var(--font-size-base)',
           fontWeight: 'var(--font-weight-semibold)',
-          marginBottom: 'var(--spacing-md)',
+          marginBottom: 'var(--spacing-sm)',
         }}>
-          Support {profileData.name || username}
+          How It Works
         </h3>
         <p style={{
-          fontSize: 'var(--font-size-base)',
+          fontSize: 'var(--font-size-sm)',
           lineHeight: '1.6',
           color: 'var(--color-off-black)',
         }}>
-          When you start a stream or send a tip, {profileData.name || username} will see their balance increase in real-time. 
-          Your support goes directly to the creator with no intermediaries, powered by Scroll network.
+          Support {profileData.name || username} with real-time streaming payments. 
+          Send an instant tip or start a continuous payment stream. All transactions 
+          are direct, transparent, and powered by Scroll network.
         </p>
       </div>
 
       {/* Responsive Styles */}
       <style>{`
         @media (max-width: 768px) {
-          .profile-header {
-            grid-template-columns: 1fr !important;
-            gap: var(--spacing-xl) !important;
-          }
-          
-          .profile-header img,
-          .profile-header > div:first-child {
-            margin: 0 auto;
-          }
-
-          .stats-grid {
-            grid-template-columns: 1fr !important;
-          }
-
-          .cta-grid {
-            grid-template-columns: 1fr !important;
+          h1 {
+            font-size: var(--font-size-3xl) !important;
           }
         }
       `}</style>
     </div>
   )
 }
-
