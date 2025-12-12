@@ -380,6 +380,7 @@ export async function getAllUsernames() {
           })
         }
       }
+      console.log('📚 [PROFILES] Loaded', usernames.length, 'profiles from localStorage')
       return usernames
     } catch (error) {
       console.error('Error getting usernames from localStorage:', error)
@@ -389,12 +390,17 @@ export async function getAllUsernames() {
   
   // Production: Query blockchain for all ProfileUpdated events
   try {
+    console.log('🔍 [PROFILES] Querying blockchain for ProfileUpdated events...')
     const provider = getPublicProvider()
     const contract = getProfileRegistryContract(provider)
     
     // Query ProfileUpdated events (global, not filtered by address)
+    // Note: Scroll Sepolia RPC limits to ~10K blocks per query
     const filter = contract.filters.ProfileUpdated()
-    const events = await contract.queryFilter(filter, -1000000) // Look back ~1M blocks
+    console.log('📡 [PROFILES] Fetching events from last 10,000 blocks...')
+    const events = await contract.queryFilter(filter, -10000) // Last ~33 hours on Scroll Sepolia
+    
+    console.log('📦 [PROFILES] Found', events.length, 'ProfileUpdated events')
     
     // Extract unique profiles (latest update per address)
     const profileMap = new Map()
@@ -407,9 +413,13 @@ export async function getAllUsernames() {
       })
     }
     
-    return Array.from(profileMap.values())
+    const profiles = Array.from(profileMap.values())
+    console.log('✅ [PROFILES] Returning', profiles.length, 'unique profiles')
+    return profiles
   } catch (error) {
-    console.error('Error getting usernames from blockchain:', error)
+    console.error('❌ [PROFILES] Error getting usernames from blockchain:', error)
+    console.error('   Error code:', error.code)
+    console.error('   Error message:', error.message)
     // Fallback to empty array if blockchain query fails
     return []
   }
