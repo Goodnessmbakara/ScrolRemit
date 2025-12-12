@@ -100,7 +100,7 @@ export default function Browse() {
         index === self.findIndex((p) => p.username === profile.username)
       )
 
-      setProfiles(uniqueProfiles)
+      setProfiles(uniqueProfiles.reverse())
     } catch (error) {
       console.error('Error loading profiles:', error)
     } finally {
