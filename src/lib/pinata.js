@@ -51,7 +51,12 @@ export async function uploadImage(file, options = {}, onProgress) {
     if (onProgress) onProgress(100)
 
     // Get dedicated gateway URL with optimization
-    const gatewayUrl = pinata.config.pinataGateway
+    let gatewayUrl = pinata.config.pinataGateway
+    
+    // Check if gateway URL already includes protocol
+    if (!gatewayUrl.startsWith('http')) {
+      gatewayUrl = `https://${gatewayUrl}`
+    }
 
     // Pinata SDK v2.5.1 returns 'cid', not 'IpfsHash'
     console.log('✅ Pinata upload successful:', { cid: upload.cid, id: upload.id })
@@ -59,9 +64,9 @@ export async function uploadImage(file, options = {}, onProgress) {
     return {
       ipfsHash: upload.cid,
       cid: upload.cid,
-      url: `https://${gatewayUrl}/ipfs/${upload.cid}`,
+      url: `${gatewayUrl}/ipfs/${upload.cid}`,
       // Optimized image URL with resize and compression
-      optimizedUrl: `https://${gatewayUrl}/ipfs/${upload.cid}?img-width=500&img-quality=85&img-format=webp`
+      optimizedUrl: `${gatewayUrl}/ipfs/${upload.cid}?img-width=500&img-quality=85&img-format=webp`
     }
   } catch (error) {
     console.error('Error uploading image to Pinata:', error)
@@ -89,12 +94,17 @@ export async function uploadJSON(jsonData, options = {}) {
     // Upload JSON using Pinata SDK v2.5.1 API
     const upload = await pinata.upload.public.json(jsonData)
 
-    const gatewayUrl = pinata.config.pinataGateway
+    let gatewayUrl = pinata.config.pinataGateway
+    
+    // Check if gateway URL already includes protocol
+    if (!gatewayUrl.startsWith('http')) {
+      gatewayUrl = `https://${gatewayUrl}`
+    }
 
     return {
       ipfsHash: upload.IpfsHash,
       cid: upload.cid,
-      url: `https://${gatewayUrl}/ipfs/${upload.IpfsHash}`
+      url: `${gatewayUrl}/ipfs/${upload.IpfsHash}`
     }
   } catch (error) {
     console.error('Error uploading JSON to Pinata:', error)
@@ -108,10 +118,15 @@ export async function uploadJSON(jsonData, options = {}) {
  * @returns {Promise<any>} - Parsed JSON or response data
  */
 export async function fetchFromIPFS(ipfsHashOrCid) {
-  const gatewayUrl = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+  let gatewayUrl = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+  
+  // Check if gateway URL already includes protocol
+  if (!gatewayUrl.startsWith('http')) {
+    gatewayUrl = `https://${gatewayUrl}`
+  }
 
   try {
-    const response = await fetch(`https://${gatewayUrl}/ipfs/${ipfsHashOrCid}`)
+    const response = await fetch(`${gatewayUrl}/ipfs/${ipfsHashOrCid}`)
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -142,9 +157,14 @@ export function getOptimizedImageUrl(ipfsHash, options = {}) {
     format = 'webp'
   } = options
 
-  const gatewayUrl = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+  let gatewayUrl = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+  
+  // Check if gateway URL already includes protocol
+  if (!gatewayUrl.startsWith('http')) {
+    gatewayUrl = `https://${gatewayUrl}`
+  }
 
-  return `https://${gatewayUrl}/ipfs/${ipfsHash}?img-width=${width}&img-quality=${quality}&img-format=${format}`
+  return `${gatewayUrl}/ipfs/${ipfsHash}?img-width=${width}&img-quality=${quality}&img-format=${format}`
 }
 
 /**
