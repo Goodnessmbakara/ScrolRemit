@@ -1,7 +1,7 @@
 // Simple auto-funding API endpoint
 // Deploy this to Vercel, Netlify, or any serverless platform
 
-const { ethers } = require('ethers');
+import { ethers } from 'ethers';
 
 const SCROLL_RPC = 'https://sepolia-rpc.scroll.io/';
 const MIN_BALANCE = ethers.parseEther('0.0005');

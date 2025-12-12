@@ -541,6 +541,11 @@ export async function createStream(signer, recipient, amountUSDC, duration, isSe
       }
     })
     
+    // Check if event was found before parsing
+    if (!event) {
+      throw new Error('StreamCreated event not found in transaction receipt. The transaction may have failed.')
+    }
+    
     const parsed = streamingContract.interface.parseLog(event)
     return {
       success: true,
@@ -616,6 +621,11 @@ export async function withdrawFromStream(signer, streamId) {
         return false
       }
     })
+    
+    // Check if event was found before parsing
+    if (!event) {
+      throw new Error('StreamWithdrawn event not found in transaction receipt. The transaction may have failed.')
+    }
     
     const parsed = streamingContract.interface.parseLog(event)
     const amount = ethers.formatUnits(parsed.args.amount, 6)
