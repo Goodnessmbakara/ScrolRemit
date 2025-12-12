@@ -83,11 +83,13 @@ export default function PublicProfile() {
   const totalReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.withdrawn || 0), 0)
 
   const handleSendTip = () => {
-    navigate('/send', { state: { recipient: `@${username}`, sendType: 'instant' } })
+    // Use URL params for reliable data passing (survives refresh)
+    navigate(`/send?recipient=${encodeURIComponent(`@${username}`)}&type=instant`)
   }
 
   const handleStartStream = () => {
-    navigate('/send', { state: { recipient: `@${username}`, sendType: 'stream' } })
+    // Use URL params for reliable data passing (survives refresh)
+    navigate(`/send?recipient=${encodeURIComponent(`@${username}`)}&type=stream`)
   }
 
   // Loading state

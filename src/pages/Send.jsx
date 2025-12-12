@@ -34,15 +34,26 @@ export default function Send() {
   const [txHash, setTxHash] = useState('')
   const [streamId, setStreamId] = useState(null)
 
-  // Handle pre-filled data from navigation state (from PublicProfile)
+  // Handle pre-filled data from URL params (primary) or navigation state (fallback)
   useEffect(() => {
-    if (location.state?.recipient) {
+    // Priority 1: URL query parameters (survives refresh)
+    const searchParams = new URLSearchParams(location.search)
+    const urlRecipient = searchParams.get('recipient')
+    const urlType = searchParams.get('type')
+    
+    if (urlRecipient) {
+      setRecipient(urlRecipient)
+    } else if (location.state?.recipient) {
+      // Priority 2: Navigation state (backwards compatibility)
       setRecipient(location.state.recipient)
     }
-    if (location.state?.sendType) {
+    
+    if (urlType) {
+      setSendType(urlType)
+    } else if (location.state?.sendType) {
       setSendType(location.state.sendType)
     }
-  }, [location.state])
+  }, [location.search, location.state])
 
   const containerStyles = {
     maxWidth: '600px',
