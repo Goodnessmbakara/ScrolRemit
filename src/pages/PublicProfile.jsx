@@ -16,10 +16,10 @@ export default function PublicProfile() {
   const [userAddress, setUserAddress] = useState('')
   const [supporters, setSupporters] = useState(0)
 
-  // Get streaming data for total received calculation
+  // Get streaming data for total received calculation - USE REAL BLOCKCHAIN DATA
   // Memoize provider to prevent infinite render loop (provider recreated = new reference = triggers useEffect)
   const provider = useMemo(() => getPublicProvider(), [])
-  const { streams } = useStreamingBalance(provider, userAddress, false)
+  const { streams } = useStreamingBalance(provider, userAddress, true) // Changed to true for real blockchain data
 
   const loadProfile = useCallback(async () => {
     try {
@@ -82,19 +82,8 @@ export default function PublicProfile() {
 
   // Calculate total received (deposited, not withdrawn!)
   // This shows what supporters have SENT, not what creator has CLAIMED
-  
-  // DEBUG: Log stream data to see what we're getting
-  useEffect(() => {
-    if (streams.length > 0) {
-      console.log('Stream data:', streams)
-      console.log('First stream:', streams[0])
-      console.log('Stream deposit values:', streams.map(s => ({ id: s.id, deposit: s.deposit, withdrawn: s.withdrawn })))
-    }
-  }, [streams])
-  
   const totalReceived = streams.reduce((acc, stream) => {
     const depositValue = parseFloat(stream.deposit || 0)
-    console.log(`Stream ${stream.id}: deposit=${stream.deposit}, parsed=${depositValue}`)
     return acc + depositValue
   }, 0)
 
@@ -279,6 +268,7 @@ export default function PublicProfile() {
               color: 'var(--color-white)',
               backgroundColor: 'var(--color-accent)',
               border: 'var(--border-width) solid var(--color-black)',
+              borderRadius: '8px',
               cursor: 'pointer',
               transition: 'opacity var(--transition-fast)',
               width: '100%',
@@ -297,6 +287,7 @@ export default function PublicProfile() {
               color: 'var(--color-black)',
               backgroundColor: 'var(--color-white)',
               border: 'var(--border-width) solid var(--color-black)',
+              borderRadius: '8px',
               cursor: 'pointer',
               transition: 'transform var(--transition-base)',
               width: '100%',
