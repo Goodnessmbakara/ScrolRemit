@@ -64,10 +64,6 @@ export default function PublicProfile() {
         username
       })
 
-      // 5. Get supporter count
-      const count = await getSupporterCount(address)
-      setSupporters(count)
-
       setLoading(false)
     } catch (err) {
       console.error('Error loading profile:', err)
@@ -90,6 +86,11 @@ export default function PublicProfile() {
   // Get unique supporters and recent activity
   const uniqueSupporters = [...new Set(streams.map(s => s.sender))].filter(Boolean)
   const recentSupporters = uniqueSupporters.slice(-3).reverse() // Last 3 supporters
+
+  // Update supporters count from actual stream data
+  useEffect(() => {
+    setSupporters(uniqueSupporters.length)
+  }, [uniqueSupporters.length])
 
   const handleSendTip = () => {
     // Use URL params for reliable data passing (survives refresh)
