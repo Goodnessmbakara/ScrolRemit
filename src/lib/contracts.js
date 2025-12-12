@@ -68,6 +68,20 @@ export async function getProvider(wallet) {
   if (!wallet) {
     throw new Error('No Privy wallet provided')
   }
+  
+  // Ensure wallet is on Scroll Sepolia (chain ID: 534351)
+  const SCROLL_SEPOLIA_CHAIN_ID = 534351
+  if (wallet.chainId !== `eip155:${SCROLL_SEPOLIA_CHAIN_ID}`) {
+    console.log('🔄 Switching network to Scroll Sepolia...')
+    try {
+      await wallet.switchChain(SCROLL_SEPOLIA_CHAIN_ID)
+      console.log('✅ Network switched to Scroll Sepolia')
+    } catch (error) {
+      console.error('❌ Failed to switch network:', error)
+      throw new Error('Please switch your wallet to Scroll Sepolia testnet')
+    }
+  }
+  
   // Get EIP-1193 provider from Privy wallet and wrap with BrowserProvider
   const ethereumProvider = await wallet.getEthereumProvider()
   const provider = new ethers.BrowserProvider(ethereumProvider)

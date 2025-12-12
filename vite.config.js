@@ -49,6 +49,15 @@ export default defineConfig({
       protocolImports: true,
     }),
   ],
+  server: {
+    proxy: {
+      // Proxy API requests to development API server
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      }
+    }
+  },
   build: {
     commonjsOptions: {
       transformMixedEsModules: true,
@@ -90,3 +99,4 @@ export default defineConfig({
     },
   },
 })
+

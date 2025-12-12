@@ -294,9 +294,29 @@ export default function CreateProfile() {
     setUploadProgress(5)
 
     try {
+      // Ensure wallet is on correct network first
+      const wallet = wallets[0]
+      const SCROLL_SEPOLIA_CHAIN_ID = 534351
+      
+      console.log('🔍 [PROFILE] Current chain:', wallet.chainId)
+      console.log('🎯 [PROFILE] Target chain: eip155:' + SCROLL_SEPOLIA_CHAIN_ID)
+      
+      if (wallet.chainId !== `eip155:${SCROLL_SEPOLIA_CHAIN_ID}`) {
+        console.log('🔄 [PROFILE] Switching to Scroll Sepolia...')
+        setGasStatus('Switching to Scroll Sepolia testnet...')
+        try {
+          await wallet.switchChain(SCROLL_SEPOLIA_CHAIN_ID)
+          console.log('✅ [PROFILE] Network switched successfully')
+          setGasStatus('')
+        } catch (error) {
+          console.error('❌ [PROFILE] Network switch failed:', error)
+          throw new Error('Please switch your wallet to Scroll Sepolia testnet (Chain ID: 534351)')
+        }
+      }
+      
       // Auto-fund wallet if needed (before any blockchain operations)
       console.log('🚀 [PROFILE] Starting profile creation flow')
-      const walletAddress = wallets[0].address
+      const walletAddress = wallet.address
       console.log('👛 [PROFILE] Wallet address:', walletAddress)
       
       const provider = getPublicProvider()
