@@ -36,6 +36,9 @@ export async function requestGasFunding(address) {
     // Use relative path for API endpoint (works in both dev and prod)
     const apiUrl = '/api/fund-wallet'
     
+    console.log('🌐 [API] Calling funding endpoint:', apiUrl)
+    console.log('📤 [API] Request payload:', { address })
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -44,10 +47,15 @@ export async function requestGasFunding(address) {
       body: JSON.stringify({ address })
     })
 
+    console.log('📥 [API] Response status:', response.status, response.statusText)
+    
     const data = await response.json()
+    console.log('📦 [API] Response data:', data)
 
     if (!response.ok) {
-      throw new Error(data.message || data.error || 'Funding request failed')
+      const errorMsg = data.message || data.error || 'Funding request failed'
+      console.error('❌ [API] Request failed:', errorMsg)
+      throw new Error(errorMsg)
     }
 
     return {
@@ -55,7 +63,8 @@ export async function requestGasFunding(address) {
       ...data
     }
   } catch (error) {
-    console.error('Error requesting gas funding:', error)
+    console.error('💥 [API] Error requesting gas funding:', error)
+    console.error('   Network error?', error.name === 'TypeError')
     return {
       success: false,
       message: error.message
@@ -81,29 +90,43 @@ export function estimateGasForProfile() {
  */
 export async function ensureGasBalance(address, provider, onStatusUpdate) {
   try {
+    console.log('🔍 [GAS CHECK] Starting gas balance check for:', address)
     onStatusUpdate?.('Checking wallet balance...')
     
-    const { hasGas } = await checkGasBalance(address, provider)
+    const { hasGas, balance } = await checkGasBalance(address, provider)
+    console.log('💰 [GAS CHECK] Current balance:', balance, 'ETH | Has sufficient gas:', hasGas)
     
     if (hasGas) {
+      console.log('✅ [GAS CHECK] Wallet has sufficient gas, skipping funding')
       return true
     }
 
     // Need to fund
+    console.log('⚠️ [GAS CHECK] Insufficient gas, requesting funding...')
     onStatusUpdate?.('⏳ Preparing your wallet for the blockchain...')
     
     const result = await requestGasFunding(address)
+    console.log('📡 [GAS FUNDING] API response:', result)
     
     if (result.success) {
+      console.log('✅ [GAS FUNDING] Wallet funded successfully!')
+      console.log('   TX Hash:', result.txHash)
+      console.log('   Amount:', result.amount, 'ETH')
+      console.log('   New Balance:', result.newBalance, 'ETH')
+      
       onStatusUpdate?.('✅ Wallet funded! Proceeding...')
-      // Wait a moment for balance to update
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Wait for balance to update
+      console.log('⏳ [GAS FUNDING] Waiting 5 seconds for balance to propagate...')
+      await new Promise(resolve => setTimeout(resolve, 5000))
       return true
     } else {
+      console.error('❌ [GAS FUNDING] Funding failed:', result.message)
       throw new Error(result.message || 'Failed to fund wallet')
     }
   } catch (error) {
-    console.error('Error ensuring gas balance:', error)
+    console.error('💥 [GAS CHECK] Error in ensureGasBalance:', error)
+    console.error('   Error message:', error.message)
+    console.error('   Error stack:', error.stack)
     onStatusUpdate?.(`❌ ${error.message}`)
     return false
   }

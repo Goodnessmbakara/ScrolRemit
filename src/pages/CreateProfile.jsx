@@ -295,19 +295,29 @@ export default function CreateProfile() {
 
     try {
       // Auto-fund wallet if needed (before any blockchain operations)
+      console.log('🚀 [PROFILE] Starting profile creation flow')
       const walletAddress = wallets[0].address
-      const provider = getPublicProvider()
+      console.log('👛 [PROFILE] Wallet address:', walletAddress)
       
+      const provider = getPublicProvider()
+      console.log('🔌 [PROFILE] Provider initialized')
+      
+      console.log('⛽ [PROFILE] Checking/ensuring gas balance...')
       const hasGas = await ensureGasBalance(walletAddress, provider, (status) => {
         setGasStatus(status)
-        console.log('Gas funding status:', status)
+        console.log('📢 [PROFILE] Status update:', status)
       })
 
+      console.log('✔️ [PROFILE] Gas check complete. Has gas:', hasGas)
+      
       if (!hasGas) {
-        throw new Error('Unable to prepare wallet. Please ensure you have sufficient ETH or try again later.')
+        const errorMsg = 'Unable to prepare wallet. The funding service may be unavailable. Please ensure you have sufficient ETH or try again later.'
+        console.error('🚫 [PROFILE] Funding failed, aborting profile creation')
+        throw new Error(errorMsg)
       }
 
       setGasStatus('') // Clear status after successful funding
+      console.log('✅ [PROFILE] Wallet ready, proceeding with profile creation')
       
       let profileImageUrl = ''
       let profileImageCid = ''
