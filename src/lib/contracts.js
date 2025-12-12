@@ -675,8 +675,25 @@ export async function getActiveStreams(provider, address) {
     const streamingContract = getStreamingContract(provider)
     
     // Query StreamCreated events where this address is the recipient
+    // Use smaller block range to avoid "Block range is too large" RPC errors
     const filter = streamingContract.filters.StreamCreated(null, null, address)
-    const events = await streamingContract.queryFilter(filter, -10000) // Last 10k blocks
+    
+    let events = []
+    // Try progressively smaller block ranges if RPC rejects
+    const blockRanges = [-2000, -1000, -500]
+    
+    for (const range of blockRanges) {
+      try {
+        events = await streamingContract.queryFilter(filter, range)
+        break // Success! Exit loop
+      } catch (err) {
+        if (err.message?.includes('Block range is too large') && range !== blockRanges[blockRanges.length - 1]) {
+          console.warn(`Block range ${range} too large, trying smaller range...`)
+          continue // Try next smaller range
+        }
+        throw err // Re-throw if it's a different error or we've exhausted ranges
+      }
+    }
     
     // Fetch current info for each stream and filter active ones
     const streams = await Promise.all(
