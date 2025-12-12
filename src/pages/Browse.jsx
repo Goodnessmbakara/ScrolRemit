@@ -127,7 +127,7 @@ export default function Browse() {
 
   const gridStyles = {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
     gap: 'var(--spacing-xl)',
     marginTop: 'var(--spacing-2xl)',
   }

@@ -261,7 +261,7 @@ export default function Profile() {
           gap: 'var(--spacing-md)',
           justifyContent: 'center',
           flexWrap: 'wrap'
-        }}>
+        }} className="profile-actions">
           <button
             onClick={() => window.location.href = '/dashboard'}
             style={{
@@ -350,6 +350,25 @@ export default function Profile() {
           )}
         </div>
       </div>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .profile-image {
+            width: 150px !important;
+            height: 150px !important;
+          }
+          
+          .profile-actions {
+            flex-direction: column !important;
+            width: 100% !important;
+          }
+          
+          .profile-actions button {
+            width: 100% !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

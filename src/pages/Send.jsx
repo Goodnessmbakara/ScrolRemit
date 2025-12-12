@@ -244,7 +244,7 @@ export default function Send() {
       </p>
 
       <Card padding="xl">
-        <div style={toggleContainerStyles}>
+        <div style={toggleContainerStyles} className="toggle-container">
           <button
             style={toggleButtonStyles(sendType === 'instant')}
             onClick={() => setSendType('instant')}
@@ -449,6 +449,15 @@ export default function Send() {
           }
         `}</style>
       </Modal>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 480px) {
+          .toggle-container {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

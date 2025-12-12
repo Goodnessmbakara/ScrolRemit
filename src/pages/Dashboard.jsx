@@ -117,7 +117,7 @@ export default function Dashboard() {
     <div style={containerStyles}>
       <h1 style={headerStyles}>Creator Dashboard</h1>
 
-      <div style={gridStyles}>
+      <div style={gridStyles} className="dashboard-grid">
         <Card padding="xl">
           <TickingBalance 
             initialBalance={balance} 
@@ -200,6 +200,16 @@ export default function Dashboard() {
           </p>
         )}
       </Card>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .dashboard-grid {
+            grid-template-columns: 1fr !important;
+            gap: var(--spacing-xl) !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

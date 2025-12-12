@@ -79,6 +79,8 @@ export default function Modal({ isOpen, onClose, children, title }) {
     lineHeight: 1,
     color: 'var(--color-black)',
     transition: 'transform 0.2s',
+    minWidth: '44px',
+    minHeight: '44px',
   }
 
   const contentStyles = {
@@ -103,12 +105,25 @@ export default function Modal({ isOpen, onClose, children, title }) {
               transform: translateY(0);
             }
           }
+          
+          /* Mobile responsive styles */
+          @media (max-width: 768px) {
+            .modal-overlay {
+              padding: var(--spacing-md) !important;
+            }
+            .modal-header {
+              padding: var(--spacing-lg) !important;
+            }
+            .modal-content {
+              padding: var(--spacing-lg) !important;
+            }
+          }
         `}
       </style>
-      <div style={overlayStyles} onClick={onClose}>
+      <div style={overlayStyles} className="modal-overlay" onClick={onClose}>
         <div style={modalStyles} onClick={(e) => e.stopPropagation()}>
           {title && (
-            <div style={headerStyles}>
+            <div style={headerStyles} className="modal-header">
               <h2 style={titleStyles}>{title}</h2>
               <button
                 onClick={onClose}
@@ -124,7 +139,7 @@ export default function Modal({ isOpen, onClose, children, title }) {
               </button>
             </div>
           )}
-          <div style={contentStyles}>
+          <div style={contentStyles} className="modal-content">
             {children}
           </div>
         </div>

@@ -74,7 +74,7 @@ export default function PublicProfile() {
 
   return (
     <div style={containerStyles}>
-      <div style={profileHeaderStyles}>
+      <div style={profileHeaderStyles} className="profile-header">
         <img 
           src={profile.image} 
           alt={profile.name}
@@ -86,7 +86,7 @@ export default function PublicProfile() {
           <p style={usernameStyles}>@{profile.username}</p>
           <p style={bioStyles}>{profile.bio}</p>
 
-          <div style={statsStyles}>
+          <div style={statsStyles} className="profile-stats">
             <div style={statItemStyles}>
               <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)', marginBottom: 'var(--spacing-xs)' }}>
                 Supporters
@@ -105,7 +105,7 @@ export default function PublicProfile() {
             </div>
           </div>
 
-          <div style={ctaGridStyles}>
+          <div style={ctaGridStyles} className="cta-grid">
             <Button variant="primary" fullWidth>
               Send Tip
             </Button>
@@ -129,6 +129,24 @@ export default function PublicProfile() {
           Your support goes directly to the creator with no intermediaries, powered by Scroll network.
         </p>
       </Card>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .profile-header {
+            grid-template-columns: 1fr !important;
+            gap: var(--spacing-xl) !important;
+          }
+          
+          .profile-stats {
+            grid-template-columns: 1fr !important;
+          }
+          
+          .cta-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

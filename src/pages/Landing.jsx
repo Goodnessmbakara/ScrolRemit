@@ -85,7 +85,7 @@ export default function Landing() {
     <div>
       {/* Hero Section */}
       <section style={heroStyles}>
-        <div style={contentStyles}>
+        <div style={contentStyles} className="hero-content">
           <div>
             <h1 style={headlineStyles}>
               Stream Money Home.<br />
@@ -97,7 +97,7 @@ export default function Landing() {
               Built on Scroll, enabling real-time streaming payments for
               continuous liquidity and global support.
             </p>
-            <div style={ctaContainerStyles}>
+            <div style={ctaContainerStyles} className="cta-container">
               <Link to="/dashboard">
                 <Button variant="primary">Launch App</Button>
               </Link>
@@ -119,7 +119,7 @@ export default function Landing() {
       {/* Features Section */}
       <section style={sectionStyles}>
         <h2 style={sectionHeaderStyles}>How It Works</h2>
-        <div style={featureGridStyles}>
+        <div style={featureGridStyles} className="feature-grid">
           <div style={featureStyles}>
             <h3 style={featureTitleStyles}>Remittance Rail</h3>
             <p style={featureDescStyles}>
@@ -173,6 +173,31 @@ export default function Landing() {
           <Button variant="outline">Connect Your Wallet</Button>
         </Link>
       </section>
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 768px) {
+          .hero-content {
+            grid-template-columns: 1fr !important;
+            gap: var(--spacing-2xl) !important;
+          }
+          
+          .feature-grid {
+            grid-template-columns: 1fr !important;
+            gap: var(--spacing-xl) !important;
+          }
+          
+          .cta-container {
+            flex-direction: column !important;
+          }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+          .feature-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
