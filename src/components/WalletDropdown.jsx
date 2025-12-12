@@ -27,7 +27,6 @@ export default function WalletDropdown({ user, logout }) {
         const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
         const contract = getProfileRegistryContract(provider)
         
-        // Correctly fetch username using the dedicated function
         const username = await contract.getUsername(address)
         
         if (username) {
@@ -75,7 +74,6 @@ export default function WalletDropdown({ user, logout }) {
   }
 
   const getDisplayName = () => {
-    // Show username if available, otherwise email, otherwise address
     if (username) return `@${username}`
     if (user?.email?.address) return user.email.address
     if (user?.google?.email) return user.google.email
@@ -99,17 +97,9 @@ export default function WalletDropdown({ user, logout }) {
         return
       }
 
-      // Privy's exportWallet() method opens a secure modal where users can:
-      // 1. Authenticate (if needed)
-      // 2. View their private key
-      // 3. View their recovery phrase (seed phrase/mnemonic)
-      // 4. Download wallet data
-      
       if (wallet.exportWallet) {
-        // This will open Privy's built-in export UI
         await wallet.exportWallet()
       } else {
-        // Fallback for wallets that don't support export
         alert(
           '⚠️ Export not available for this wallet type.\n\n' +
           'If you created your wallet with Privy (embedded wallet), you should be able to export it.\n\n' +
@@ -119,9 +109,7 @@ export default function WalletDropdown({ user, logout }) {
     } catch (error) {
       console.error('Error exporting wallet:', error)
       
-      // Provide helpful error message
       if (error.message?.includes('User rejected')) {
-        // User cancelled the export
         return
       }
       
@@ -133,28 +121,31 @@ export default function WalletDropdown({ user, logout }) {
     }
   }
 
+  // Search bar pill button with blue edges
   const buttonStyles = {
     display: 'flex',
     alignItems: 'center',
-    gap: 'var(--spacing-sm)',
-    padding: 'var(--spacing-md) var(--spacing-lg)',
+    gap: '8px',
+    padding: '6px 16px',
     backgroundColor: 'var(--color-white)',
-    border: '2px solid var(--color-black)',
-    borderRadius: 'var(--border-radius-md)',
+    border: '2px solid var(--color-accent)',
+    borderRadius: '30px',
     cursor: 'pointer',
     fontWeight: 'var(--font-weight-medium)',
     fontSize: 'var(--font-size-sm)',
-    transition: 'transform var(--transition-base)',
+    transition: 'all var(--transition-base)',
+    boxShadow: '0 0 0 3px rgba(0, 47, 167, 0.1)',
   }
 
+  // Dropdown menu with blue accents
   const dropdownStyles = {
     position: 'absolute',
-    top: 'calc(100% + 8px)',
+    top: 'calc(100% + 12px)',
     right: 0,
     backgroundColor: 'var(--color-white)',
-    border: '2px solid var(--color-black)',
-    borderRadius: 'var(--border-radius-md)',
-    boxShadow: '4px 4px 0 var(--color-black)',
+    border: '2px solid var(--color-accent)',
+    borderRadius: '16px',
+    boxShadow: '0 8px 24px rgba(0, 47, 167, 0.15)',
     padding: 'var(--spacing-lg)',
     minWidth: '320px',
     zIndex: 1000,
@@ -165,8 +156,9 @@ export default function WalletDropdown({ user, logout }) {
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 'var(--spacing-md)',
-    backgroundColor: 'var(--color-light-gray)',
-    borderRadius: 'var(--border-radius-sm)',
+    backgroundColor: 'rgba(0, 47, 167, 0.05)',
+    border: '1px solid rgba(0, 47, 167, 0.2)',
+    borderRadius: '12px',
     marginBottom: 'var(--spacing-md)',
   }
 
@@ -174,23 +166,26 @@ export default function WalletDropdown({ user, logout }) {
     padding: 'var(--spacing-md)',
     textAlign: 'center',
     marginBottom: 'var(--spacing-md)',
+    backgroundColor: 'rgba(0, 47, 167, 0.03)',
+    borderRadius: '12px',
   }
 
   const actionButtonStyles = {
     width: '100%',
     padding: 'var(--spacing-md)',
     backgroundColor: 'var(--color-white)',
-    border: '2px solid var(--color-black)',
-    borderRadius: 'var(--border-radius-sm)',
+    border: '2px solid var(--color-accent)',
+    borderRadius: '12px',
     cursor: 'pointer',
     fontWeight: 'var(--font-weight-medium)',
     marginBottom: 'var(--spacing-sm)',
     transition: 'all 0.2s',
+    color: 'var(--color-accent)',
   }
 
   const signOutButtonStyles = {
     ...actionButtonStyles,
-    backgroundColor: 'var(--color-black)',
+    backgroundColor: 'var(--color-accent)',
     color: 'var(--color-white)',
     marginBottom: 0,
   }
@@ -201,29 +196,34 @@ export default function WalletDropdown({ user, logout }) {
         onClick={() => setIsOpen(!isOpen)}
         style={buttonStyles}
         onMouseEnter={(e) => {
-          e.target.style.transform = 'translateY(-2px)'
+          e.target.style.boxShadow = '0 0 0 4px rgba(0, 47, 167, 0.2)'
+          e.target.style.transform = 'translateY(-1px)'
         }}
         onMouseLeave={(e) => {
+          e.target.style.boxShadow = '0 0 0 3px rgba(0, 47, 167, 0.1)'
           e.target.style.transform = 'translateY(0)'
         }}
       >
+        {/* Blue dot indicator */}
         <div
           style={{
             width: '8px',
             height: '8px',
             borderRadius: '50%',
-            backgroundColor: 'var(--color-primary)',
+            backgroundColor: 'var(--color-accent)',
           }}
         />
-        <span>{formatAddress(address)}</span>
-        <span style={{ fontSize: '12px' }}>{isOpen ? '▲' : '▼'}</span>
+        <span>{getDisplayName()}</span>
+        <span style={{ fontSize: '10px', color: 'var(--color-accent)' }}>
+          {isOpen ? '▲' : '▼'}
+        </span>
       </button>
 
       {isOpen && (
         <div style={dropdownStyles}>
-          {/* User Info */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <div style={{ fontSize: 'var(--font-size-sm)', color: '#666', marginBottom: '4px' }}>
+          {/* User Info with blue accent */}
+          <div style={{ marginBottom: 'var(--spacing-lg)', paddingBottom: 'var(--spacing-md)', borderBottom: '2px solid rgba(0, 47, 167, 0.1)' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginBottom: '4px' }}>
               Signed in as
             </div>
             <div style={{ fontWeight: 'var(--font-weight-medium)', marginBottom: 'var(--spacing-sm)' }}>
@@ -233,7 +233,7 @@ export default function WalletDropdown({ user, logout }) {
               <div style={{ 
                 fontSize: 'var(--font-size-base)', 
                 fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--color-primary)',
+                color: 'var(--color-accent)',
                 marginTop: 'var(--spacing-xs)'
               }}>
                 @{username}
@@ -241,10 +241,10 @@ export default function WalletDropdown({ user, logout }) {
             )}
           </div>
 
-          {/* Wallet Address */}
+          {/* Wallet Address with blue accent */}
           <div style={addressItemStyles}>
             <div>
-              <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginBottom: '4px' }}>
+              <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', marginBottom: '4px', fontWeight: 'var(--font-weight-semibold)' }}>
                 Wallet Address
               </div>
               <div style={{ fontFamily: 'monospace', fontSize: 'var(--font-size-sm)' }}>
@@ -255,25 +255,26 @@ export default function WalletDropdown({ user, logout }) {
               onClick={copyAddress}
               style={{
                 padding: '6px 12px',
-                backgroundColor: copied ? 'var(--color-primary)' : 'var(--color-white)',
-                color: copied ? 'var(--color-white)' : 'var(--color-black)',
-                border: '1px solid var(--color-black)',
-                borderRadius: '4px',
+                backgroundColor: copied ? 'var(--color-accent)' : 'var(--color-white)',
+                color: copied ? 'var(--color-white)' : 'var(--color-accent)',
+                border: '1px solid var(--color-accent)',
+                borderRadius: '8px',
                 cursor: 'pointer',
                 fontSize: '12px',
-                fontWeight: 'var(--font-weight-medium)',
+                fontWeight: 'var(--font-weight-semibold)',
+                transition: 'all 0.2s',
               }}
             >
               {copied ? '✓ Copied' : 'Copy'}
             </button>
           </div>
 
-          {/* Balance */}
+          {/* Balance with blue background */}
           <div style={balanceStyles}>
-            <div style={{ fontSize: 'var(--font-size-xs)', color: '#666', marginBottom: '4px' }}>
+            <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-accent)', marginBottom: '4px', fontWeight: 'var(--font-weight-semibold)' }}>
               Balance
             </div>
-            <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)' }}>
+            <div style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-accent)' }}>
               {parseFloat(balance).toFixed(4)} ETH
             </div>
             <div style={{ fontSize: 'var(--font-size-xs)', color: '#666' }}>
@@ -281,12 +282,12 @@ export default function WalletDropdown({ user, logout }) {
             </div>
           </div>
 
-          {/* Actions */}
+          {/* Action buttons with blue theme */}
           <button
             onClick={() => window.open(`https://sepolia.scrollscan.com/address/${address}`, '_blank')}
             style={actionButtonStyles}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--color-light-gray)'
+              e.target.style.backgroundColor = 'rgba(0, 47, 167, 0.05)'
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = 'var(--color-white)'
@@ -299,7 +300,7 @@ export default function WalletDropdown({ user, logout }) {
             onClick={exportWallet}
             style={actionButtonStyles}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--color-light-gray)'
+              e.target.style.backgroundColor = 'rgba(0, 47, 167, 0.05)'
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = 'var(--color-white)'
@@ -315,10 +316,10 @@ export default function WalletDropdown({ user, logout }) {
             }}
             style={signOutButtonStyles}
             onMouseEnter={(e) => {
-              e.target.style.backgroundColor = 'var(--color-primary)'
+              e.target.style.backgroundColor = 'var(--color-black)'
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = 'var(--color-black)'
+              e.target.style.backgroundColor = 'var(--color-accent)'
             }}
           >
             Sign Out

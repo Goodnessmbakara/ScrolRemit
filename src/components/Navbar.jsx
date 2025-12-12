@@ -32,7 +32,7 @@ export default function Navbar() {
 
   // Search bar pill container
   const searchBarStyles = {
-    maxWidth: '920px',
+    maxWidth: '1200px',
     margin: '0 auto',
     backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.95)' : 'var(--color-white)',
     backdropFilter: isScrolled ? 'blur(10px)' : 'none',
