@@ -22,17 +22,29 @@ export const PROFILE_REGISTRY_ABI = [
   'event ProfileUpdated(address indexed user, string cid, string username, uint256 timestamp)',
 ]
 
-// Streaming Payment Contract ABI (simplified for demo)
+// Streaming Payment Contract ABI - CORRECTED to match deployed contract
 export const STREAMING_ABI = [
-  'function createStream(address recipient, uint256 amount, uint256 duration) external returns (uint256)',
+  // State-changing functions
+  'function createStream(address recipient, uint256 deposit, uint256 duration) external returns (uint256 streamId)',
   'function cancelStream(uint256 streamId) external',
-  'function withdrawFromStream(uint256 streamId) external returns (uint256)',
-  'function getStreamBalance(uint256 streamId) external view returns (uint256)',
-  'function getActiveStreams(address recipient) external view returns (uint256[])',
-  'function streamInfo(uint256 streamId) external view returns (address sender, address recipient, uint256 rate, uint256 startTime, uint256 endTime, uint256 withdrawn, bool active)',
-  'event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 rate, uint256 duration)',
-  'event StreamWithdrawn(uint256 indexed streamId, address indexed recipient, uint256 amount)',
-  'event StreamCancelled(uint256 indexed streamId)',
+  'function withdrawFromStream(uint256 streamId) external returns (uint256 amount)',
+  'function pause() external',
+  'function unpause() external',
+  
+  // View functions
+  'function balanceOf(uint256 streamId) external view returns (uint256)',
+  'function getStream(uint256 streamId) external view returns (address sender, address recipient, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 withdrawn, bool active)',
+  'function streams(uint256 streamId) external view returns (address sender, address recipient, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime, uint256 withdrawn, bool active)',
+  'function nextStreamId() external view returns (uint256)',
+  'function token() external view returns (address)',
+  'function paused() external view returns (bool)',
+  
+  // Events - CORRECTED signatures to match actual contract
+  'event StreamCreated(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 deposit, uint256 ratePerSecond, uint256 startTime, uint256 stopTime)',
+  'event WithdrawFromStream(uint256 indexed streamId, address indexed recipient, uint256 amount)',
+  'event CancelStream(uint256 indexed streamId, address indexed sender, address indexed recipient, uint256 senderBalance, uint256 recipientBalance)',
+  
+  // Errors
   'error InvalidRecipient()',
   'error InvalidDeposit()',
   'error InvalidDuration()',
@@ -648,7 +660,7 @@ export async function withdrawFromStream(signer, streamId) {
 export async function getStreamBalance(provider, streamId) {
   try {
     const streamingContract = getStreamingContract(provider)
-    const balance = await streamingContract.getStreamBalance(streamId)
+    const balance = await streamingContract.balanceOf(streamId) // Fixed: was getStreamBalance, now balanceOf
     return ethers.formatUnits(balance, 6)
   } catch (error) {
     console.error('Error getting stream balance:', error)
@@ -657,29 +669,45 @@ export async function getStreamBalance(provider, streamId) {
 }
 
 // Get all active streams for an address
+// Note: Contract doesn't have getActiveStreams function, so we query events
 export async function getActiveStreams(provider, address) {
   try {
     const streamingContract = getStreamingContract(provider)
-    const streamIds = await streamingContract.getActiveStreams(address)
     
-    // Fetch info for each stream
+    // Query StreamCreated events where this address is the recipient
+    const filter = streamingContract.filters.StreamCreated(null, null, address)
+    const events = await streamingContract.queryFilter(filter, -10000) // Last 10k blocks
+    
+    // Fetch current info for each stream and filter active ones
     const streams = await Promise.all(
-      streamIds.map(async (id) => {
-        const info = await streamingContract.streamInfo(id)
-        return {
-          id: id.toString(),
-          sender: info.sender,
-          recipient: info.recipient,
-          rate: ethers.formatUnits(info.rate, 6),
-          startTime: Number(info.startTime),
-          endTime: Number(info.endTime),
-          withdrawn: ethers.formatUnits(info.withdrawn, 6),
-          active: info.active
+      events.map(async (event) => {
+        const streamId = event.args.streamId
+        try {
+          const info = await streamingContract.getStream(streamId) // Fixed: was streamInfo, now getStream
+          
+          // Only return if still active
+          if (!info.active) return null
+          
+          return {
+            id: streamId.toString(),
+            sender: info.sender,
+            recipient: info.recipient,
+            deposit: ethers.formatUnits(info.deposit, 6), // Added: deposit field
+            rate: ethers.formatUnits(info.ratePerSecond, 6), // Fixed: was rate, now ratePerSecond
+            startTime: Number(info.startTime),
+            endTime: Number(info.stopTime), // Fixed: was endTime, now stopTime
+            withdrawn: ethers.formatUnits(info.withdrawn, 6),
+            active: info.active
+          }
+        } catch (err) {
+          console.error(`Error fetching stream ${streamId}:`, err)
+          return null
         }
       })
     )
     
-    return streams
+    // Filter out null values (inactive or errored streams)
+    return streams.filter(s => s !== null)
   } catch (error) {
     console.error('Error getting active streams:', error)
     return []

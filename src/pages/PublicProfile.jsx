@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Card from '../components/Card'
 import Button from '../components/Button'
@@ -17,7 +17,8 @@ export default function PublicProfile() {
   const [supporters, setSupporters] = useState(0)
 
   // Get streaming data for total received calculation
-  const provider = getPublicProvider()
+  // Memoize provider to prevent infinite render loop (provider recreated = new reference = triggers useEffect)
+  const provider = useMemo(() => getPublicProvider(), [])
   const { streams } = useStreamingBalance(provider, userAddress, false)
 
   const loadProfile = useCallback(async () => {
@@ -153,166 +154,348 @@ export default function PublicProfile() {
     )
   }
 
-  const containerStyles = {
-    maxWidth: '800px',
-    margin: '0 auto',
-    padding: 'var(--spacing-3xl) var(--spacing-lg)',
-  }
-
-  const profileHeaderStyles = {
-    display: 'grid',
-    gridTemplateColumns: '300px 1fr',
-    gap: 'var(--spacing-2xl)',
-    marginBottom: 'var(--spacing-3xl)',
-  }
-
-  const imageStyles = {
-    width: '100%',
-    aspectRatio: '1',
-    objectFit: 'cover',
-    border: 'var(--border-width) solid var(--color-black)',
-  }
-
-  const imagePlaceholderStyles = {
-    width: '100%',
-    aspectRatio: '1',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '72px',
-    fontWeight: 'bold',
-    color: 'var(--color-accent)',
-    backgroundColor: 'var(--color-light-gray)',
-    border: 'var(--border-width) solid var(--color-black)',
-  }
-
-  const nameStyles = {
-    fontSize: 'var(--font-size-4xl)',
-    fontWeight: 'var(--font-weight-bold)',
-    marginBottom: 'var(--spacing-xs)',
-  }
-
-  const usernameStyles = {
-    fontSize: 'var(--font-size-lg)',
-    color: 'var(--color-off-black)',
-    marginBottom: 'var(--spacing-lg)',
-  }
-
-  const bioStyles = {
-    fontSize: 'var(--font-size-base)',
-    lineHeight: '1.7',
-    color: 'var(--color-off-black)',
-    marginBottom: 'var(--spacing-xl)',
-  }
-
-  const statsStyles = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: 'var(--spacing-lg)',
-    marginBottom: 'var(--spacing-xl)',
-  }
-
-  const statItemStyles = {
-    padding: 'var(--spacing-md)',
-    border: 'var(--border-width) solid var(--color-black)',
-  }
-
-  const ctaGridStyles = {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 'var(--spacing-md)',
-  }
-
   return (
-    <div style={containerStyles}>
-      <div style={profileHeaderStyles} className="profile-header">
-        {profileData.imageUrl ? (
-          <img 
-            src={profileData.imageUrl} 
-            alt={profileData.name || username}
-            style={imageStyles}
-            onError={(e) => {
-              e.target.style.display = 'none'
-              e.target.nextElementSibling.style.display = 'flex'
-            }}
-          />
-        ) : (
-          <div style={imagePlaceholderStyles}>
-            {(profileData.name || username).charAt(0).toUpperCase()}
-          </div>
-        )}
-        {/* Fallback for broken image */}
-        <div style={{...imagePlaceholderStyles, display: 'none'}}>
-          {(profileData.name || username).charAt(0).toUpperCase()}
-        </div>
-        
-        <div>
-          <h1 style={nameStyles}>{profileData.name || username}</h1>
-          <p style={usernameStyles}>@{username}</p>
-          <p style={bioStyles}>{profileData.bio || 'No bio yet'}</p>
+    <>
+      {/* Gradient Hero Background */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0052FF 0%, #8B5CF6 100%)',
+        minHeight: '280px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Decorative floating shapes */}
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          right: '10%',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.1)',
+          filter: 'blur(40px)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '40px',
+          left: '15%',
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.08)',
+          filter: 'blur(50px)',
+        }} />
+      </div>
 
-          <div style={statsStyles} className="profile-stats">
-            <div style={statItemStyles}>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)', marginBottom: 'var(--spacing-xs)' }}>
-                Supporters
-              </p>
-              <p style={{ fontSize: 'var(--font-size-3xl)', fontWeight: 'var(--font-weight-bold)' }}>
+      {/* Main Profile Card - Floating with overlap */}
+      <div style={{
+        maxWidth: '900px',
+        margin: '-120px auto 0',
+        padding: '0 var(--spacing-lg) var(--spacing-3xl)',
+        position: 'relative',
+        zIndex: 10,
+      }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '24px',
+          padding: 'var(--spacing-3xl) var(--spacing-2xl)',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 0 40px rgba(139, 92, 246, 0.1)',
+          textAlign: 'center',
+        }} className="profile-card">
+          {/* Circular Avatar with Gradient Ring */}
+          <div style={{
+            display: 'inline-block',
+            position: 'relative',
+            marginBottom: 'var(--spacing-xl)',
+          }}>
+            {profileData.imageUrl ? (
+              <>
+                <img 
+                  src={profileData.imageUrl} 
+                  alt={profileData.name || username}
+                  style={{
+                    width: '200px',
+                    height: '200px',
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    border: '6px solid transparent',
+                    background: 'linear-gradient(white, white) padding-box, linear-gradient(135deg, #0052FF, #8B5CF6) border-box',
+                    transition: 'transform 0.3s ease',
+                  }}
+                  className="profile-avatar"
+                  onError={(e) => {
+                    e.target.style.display = 'none'
+                    e.target.nextElementSibling.style.display = 'flex'
+                  }}
+                />
+                <div style={{
+                  width: '200px',
+                  height: '200px',
+                  borderRadius: '50%',
+                  display: 'none',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '72px',
+                  fontWeight: 'bold',
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #0052FF, #8B5CF6)',
+                  border: '6px solid rgba(255, 255, 255, 0.3)',
+                }}>
+                  {(profileData.name || username).charAt(0).toUpperCase()}
+                </div>
+              </>
+            ) : (
+              <div style={{
+                width: '200px',
+                height: '200px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '72px',
+                fontWeight: 'bold',
+                color: 'white',
+                background: 'linear-gradient(135deg, #0052FF, #8B5CF6)',
+                border: '6px solid rgba(255, 255, 255, 0.3)',
+              }}>
+                {(profileData.name || username).charAt(0).toUpperCase()}
+              </div>
+            )}
+          </div>
+
+          {/* Name with Gradient Text */}
+          <h1 style={{
+            fontSize: '48px',
+            fontWeight: '800',
+            marginBottom: 'var(--spacing-xs)',
+            background: 'linear-gradient(135deg, #0052FF, #8B5CF6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}>
+            {profileData.name || username}
+          </h1>
+
+          {/* Username */}
+          <p style={{
+            fontSize: 'var(--font-size-xl)',
+            color: '#6B7280',
+            marginBottom: 'var(--spacing-lg)',
+            fontWeight: '500',
+          }}>
+            @{username}
+          </p>
+
+          {/* Bio */}
+          {profileData.bio && (
+            <p style={{
+              fontSize: 'var(--font-size-base)',
+              lineHeight: '1.7',
+              color: '#4B5563',
+              marginBottom: 'var(--spacing-2xl)',
+              maxWidth: '600px',
+              margin: '0 auto var(--spacing-2xl)',
+            }}>
+              {profileData.bio}
+            </p>
+          )}
+
+          {/* Stats Grid with Icons */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 'var(--spacing-xl)',
+            marginBottom: 'var(--spacing-2xl)',
+            maxWidth: '500px',
+            margin: '0 auto var(--spacing-2xl)',
+          }} className="stats-grid">
+            <div style={{
+              padding: 'var(--spacing-xl)',
+              background: 'linear-gradient(135deg, #F0F9FF 0%, #E0E7FF 100%)',
+              borderRadius: '16px',
+              border: '2px solid rgba(0, 82, 255, 0.1)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }} className="stat-card">
+              <div style={{
+                fontSize: '32px',
+                marginBottom: 'var(--spacing-sm)',
+              }}>👥</div>
+              <p style={{
+                fontSize: '42px',
+                fontWeight: '800',
+                color: '#0052FF',
+                marginBottom: 'var(--spacing-xs)',
+                lineHeight: '1',
+              }}>
                 {supporters}
               </p>
-            </div>
-            <div style={statItemStyles}>
-              <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-off-black)', marginBottom: 'var(--spacing-xs)' }}>
-                Total Received
+              <p style={{
+                fontSize: 'var(--font-size-sm)',
+                color: '#6B7280',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}>
+                Supporters
               </p>
-              <p style={{ fontSize: 'var(--font-size-2xl)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-accent)' }}>
+            </div>
+
+            <div style={{
+              padding: 'var(--spacing-xl)',
+              background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+              borderRadius: '16px',
+              border: '2px solid rgba(16, 185, 129, 0.1)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }} className="stat-card">
+              <div style={{
+                fontSize: '32px',
+                marginBottom: 'var(--spacing-sm)',
+              }}>💰</div>
+              <p style={{
+                fontSize: '42px',
+                fontWeight: '800',
+                color: '#10B981',
+                marginBottom: 'var(--spacing-xs)',
+                lineHeight: '1',
+              }}>
                 ${totalReceived.toFixed(2)}
+              </p>
+              <p style={{
+                fontSize: 'var(--font-size-sm)',
+                color: '#6B7280',
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+              }}>
+                Total Received
               </p>
             </div>
           </div>
 
-          <div style={ctaGridStyles} className="cta-grid">
-            <Button variant="primary" fullWidth onClick={handleSendTip}>
+          {/* CTA Buttons with Gradients */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 'var(--spacing-md)',
+            maxWidth: '600px',
+            margin: '0 auto',
+          }} className="cta-grid">
+            <button
+              onClick={handleSendTip}
+              style={{
+                padding: 'var(--spacing-lg) var(--spacing-xl)',
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: '700',
+                color: 'white',
+                background: 'linear-gradient(135deg, #0052FF 0%, #0041CC 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(0, 82, 255, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--spacing-sm)',
+              }}
+              className="cta-button-primary"
+            >
+              <span style={{ fontSize: '20px' }}>💸</span>
               Send Tip
-            </Button>
-            <Button variant="outline" fullWidth onClick={handleStartStream}>
+            </button>
+            <button
+              onClick={handleStartStream}
+              style={{
+                padding: 'var(--spacing-lg) var(--spacing-xl)',
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: '700',
+                color: '#0052FF',
+                background: 'white',
+                border: '3px solid #0052FF',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 'var(--spacing-sm)',
+              }}
+              className="cta-button-secondary"
+            >
+              <span style={{ fontSize: '20px' }}>🌊</span>
               Start Stream
-            </Button>
+            </button>
           </div>
+        </div>
+
+        {/* Support Info Card */}
+        <div style={{
+          marginTop: 'var(--spacing-2xl)',
+          background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%)',
+          borderRadius: '20px',
+          padding: 'var(--spacing-2xl)',
+          border: '2px solid #E2E8F0',
+        }}>
+          <h3 style={{
+            fontSize: 'var(--font-size-2xl)',
+            fontWeight: '700',
+            marginBottom: 'var(--spacing-md)',
+            color: '#1E293B',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-sm)',
+          }}>
+            <span style={{ fontSize: '28px' }}>✨</span>
+            Support {profileData.name || username}
+          </h3>
+          <p style={{
+            fontSize: 'var(--font-size-base)',
+            color: '#475569',
+            lineHeight: '1.7',
+          }}>
+            When you start a stream or send a tip, {profileData.name || username} will see their balance increase in real-time. 
+            Your support goes directly to the creator with no intermediaries, powered by <strong>Scroll network</strong>.
+          </p>
         </div>
       </div>
 
-      <Card padding="lg">
-        <h3 style={{ 
-          fontSize: 'var(--font-size-2xl)', 
-          fontWeight: 'var(--font-weight-semibold)',
-          marginBottom: 'var(--spacing-md)',
-        }}>
-          Support {profileData.name || username}
-        </h3>
-        <p style={{ fontSize: 'var(--font-size-base)', color: 'var(--color-off-black)', lineHeight: '1.6' }}>
-          When you start a stream or send a tip, {profileData.name || username} will see their balance increase in real-time. 
-          Your support goes directly to the creator with no intermediaries, powered by Scroll network.
-        </p>
-      </Card>
-
-      {/* Responsive Styles */}
+      {/* Enhanced Styles */}
       <style>{`
+        .profile-avatar:hover {
+          transform: scale(1.05);
+        }
+
+        .stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .cta-button-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 82, 255, 0.6);
+        }
+
+        .cta-button-secondary:hover {
+          background: linear-gradient(135deg, #0052FF 0%, #0041CC 100%);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(0, 82, 255, 0.4);
+        }
+
         @media (max-width: 768px) {
-          .profile-header {
-            grid-template-columns: 1fr !important;
-            gap: var(--spacing-xl) !important;
+          .profile-card {
+            padding: var(--spacing-2xl) var(--spacing-lg) !important;
           }
-          
-          .profile-stats {
+
+          .stats-grid {
             grid-template-columns: 1fr !important;
           }
-          
+
           .cta-grid {
             grid-template-columns: 1fr !important;
           }
         }
       `}</style>
-    </div>
+    </>
   )
 }
 
