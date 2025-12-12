@@ -3,6 +3,7 @@ import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Card from '../components/Card'
 import Input from '../components/Input'
 import Button from '../components/Button'
+import Modal from '../components/Modal'
 import { uploadImage, uploadJSON, validateFile } from '../lib/pinata'
 
 export default function CreateProfile() {
@@ -16,6 +17,8 @@ export default function CreateProfile() {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [error, setError] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successData, setSuccessData] = useState(null)
 
   const pageStyles = {
     minHeight: '100vh',
@@ -343,19 +346,15 @@ export default function CreateProfile() {
       console.log('TX Hash:', result.txHash)
       console.log('Username:', username)
       
-      let successMessage
-      if (result.needsGas) {
-        // No gas available - profile saved locally
-        successMessage = `✅ Profile Created (Saved Locally)!\n\nUsername: ${username}\n\n⚠️ Your wallet needs Scroll Sepolia ETH for gas to save permanently on-chain.\n\n🔗 Get free testnet ETH:\nhttps://sepolia.scroll.io/faucet\n\nYour profile works now and will upgrade to blockchain automatically when you have gas!`
-      } else if (result.isMock) {
-        // Contract not deployed fallback
-        successMessage = `✅ Profile created in Development Mode!\n\nUsername: ${username}\n\nNote: This is stored locally. Deploy the ProfileRegistry contract for permanent blockchain storage.`
-      } else {
-        // Success - on blockchain
-        successMessage = `✅ Profile created on Blockchain!\n\nUsername: ${username}\nTransaction: ${result.txHash}\n\nYour profile is now permanently stored and will load automatically on re-login.`
-      }
-      
-      alert(successMessage)
+      // Set success data for modal
+      setSuccessData({
+        username,
+        txHash: result.txHash,
+        needsGas: result.needsGas,
+        isMock: result.isMock,
+        message: result.message
+      })
+      setShowSuccessModal(true)
       
       // Reset form
       setName('')
@@ -561,6 +560,116 @@ export default function CreateProfile() {
           to { opacity: 1; transform: scale(1); }
         }
       `}</style>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="🎉 Profile Created!"
+      >
+        <div style={{ textAlign: 'center' }}>
+          {/* Success Icon */}
+          <div style={{
+            width: '80px',
+            height: '80px',
+            margin: '0 auto var(--spacing-xl)',
+            backgroundColor: 'var(--color-primary)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '40px',
+          }}>
+            ✓
+          </div>
+
+          {/* Username */}
+          <h3 style={{
+            fontSize: 'var(--font-size-2xl)',
+            fontWeight: 'var(--font-weight-bold)',
+            marginBottom: 'var(--spacing-sm)',
+            color: 'var(--color-primary)'
+          }}>
+            @{successData?.username}
+          </h3>
+
+          {/* Success Message */}
+          <p style={{
+            fontSize: 'var(--font-size-base)',
+            color: 'var(--color-off-black)',
+            marginBottom: 'var(--spacing-xl)',
+            lineHeight: 1.5
+          }}>
+            {successData?.isMock 
+              ? 'Your profile was created in development mode and saved locally.'
+              : successData?.needsGas
+                ? 'Profile saved locally. Get testnet ETH to save on-chain.'
+                : 'Your profile is now permanently stored on the Scroll blockchain!'}
+          </p>
+
+          {/* Transaction Details */}
+          {successData?.txHash && !successData.txHash.startsWith('local') && (
+            <div style={{
+              backgroundColor: 'var(--color-light-gray)',
+              padding: 'var(--spacing-lg)',
+              borderRadius: 'var(--border-radius-md)',
+              marginBottom: 'var(--spacing-xl)',
+              textAlign: 'left'
+            }}>
+              <div style={{
+                fontSize: 'var(--font-size-xs)',
+                color: '#666',
+                marginBottom: 'var(--spacing-xs)',
+                fontWeight: 'var(--font-weight-medium)'
+              }}>
+                Transaction Hash
+              </div>
+              <div style={{
+                fontFamily: 'monospace',
+                fontSize: 'var(--font-size-sm)',
+                wordBreak: 'break-all',
+                color: 'var(--color-black)'
+              }}>
+                {successData.txHash}
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 'var(--spacing-md)', flexDirection: 'column' }}>
+            {successData?.txHash && !successData.txHash.startsWith('local') && (
+              <Button
+                variant="outline"
+                onClick={() => window.open(`https://sepolia.scrollscan.com/tx/${successData.txHash}`, '_blank')}
+                style={{ width: '100%' }}
+              >
+                View on Scrollscan →
+              </Button>
+            )}
+            
+            {successData?.needsGas && (
+              <Button
+                variant="outline"
+                onClick={() => window.open('https://sepolia.scroll.io/faucet', '_blank')}
+                style={{ width: '100%' }}
+              >
+                Get Testnet ETH
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              onClick={() => {
+                setShowSuccessModal(false)
+                window.location.href = '/profile'
+              }}
+              style={{ width: '100%' }}
+            >
+              View My Profile
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

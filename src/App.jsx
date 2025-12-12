@@ -9,7 +9,7 @@ import './index.css'
 const Landing = lazy(() => import('./pages/Landing'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Send = lazy(() => import('./pages/Send'))
-const CreateProfile = lazy(() => import('./pages/CreateProfile'))
+const Profile = lazy(() => import('./pages/Profile'))
 const PublicProfile = lazy(() => import('./pages/PublicProfile'))
 const Browse = lazy(() => import('./pages/Browse'))
 
@@ -86,7 +86,7 @@ function App() {
                 <Route path="/browse" element={<Browse />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/send" element={<Send />} />
-                <Route path="/profile" element={<CreateProfile />} />
+                <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:username" element={<PublicProfile />} />
               </Routes>
             </Suspense>
