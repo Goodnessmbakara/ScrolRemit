@@ -188,7 +188,7 @@ export default function Dashboard() {
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: 'var(--font-size-lg)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-accent)' }}>
-                    ${stream.rate.toFixed(4)}/sec
+                    ${parseFloat(stream.rate).toFixed(4)}/sec
                   </p>
                 </div>
               </div>
