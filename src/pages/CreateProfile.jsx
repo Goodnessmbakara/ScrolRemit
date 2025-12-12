@@ -5,6 +5,8 @@ import Input from '../components/Input'
 import Button from '../components/Button'
 import Modal from '../components/Modal'
 import { uploadImage, uploadJSON, validateFile } from '../lib/pinata'
+import { ensureGasBalance } from '../lib/gasHelper'
+import { getPublicProvider } from '../lib/contracts'
 
 export default function CreateProfile() {
   const { ready, authenticated, login } = usePrivy()
@@ -19,6 +21,7 @@ export default function CreateProfile() {
   const [isDragging, setIsDragging] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successData, setSuccessData] = useState(null)
+  const [gasStatus, setGasStatus] = useState('') // For gas funding status messages
 
   const pageStyles = {
     minHeight: '100vh',
@@ -291,6 +294,21 @@ export default function CreateProfile() {
     setUploadProgress(5)
 
     try {
+      // Auto-fund wallet if needed (before any blockchain operations)
+      const walletAddress = wallets[0].address
+      const provider = getPublicProvider()
+      
+      const hasGas = await ensureGasBalance(walletAddress, provider, (status) => {
+        setGasStatus(status)
+        console.log('Gas funding status:', status)
+      })
+
+      if (!hasGas) {
+        throw new Error('Unable to prepare wallet. Please ensure you have sufficient ETH or try again later.')
+      }
+
+      setGasStatus('') // Clear status after successful funding
+      
       let profileImageUrl = ''
       let profileImageCid = ''
 
@@ -484,6 +502,16 @@ export default function CreateProfile() {
                 </div>
               )}
 
+              {/* Gas funding status */}
+              {gasStatus && (
+                <div style={{ marginBottom: 'var(--spacing-md)', padding: 'var(--spacing-md)', backgroundColor: 'rgba(0, 47, 167, 0.05)', borderRadius: 'var(--border-radius)', textAlign: 'center' }}>
+                  <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-accent)', fontWeight: 'var(--font-weight-medium)' }}>
+                    {gasStatus}
+                  </p>
+                </div>
+              )}
+
+              {/* Upload progress */}
               {uploading && (
                 <div>
                   <div style={progressBarContainerStyles}>
