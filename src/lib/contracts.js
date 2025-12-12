@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { useWallets } from '@privy-io/react-auth'
+import { USERNAME_CONFIG, cleanUsername } from './username'
 
 // Contract addresses - UPDATE THESE when deployed to Scroll
 export const CONTRACTS = {
@@ -485,22 +486,21 @@ export async function validateRecipient(input) {
     }
   }
   
-  // Assume it's a username
-  const cleanUsername = trimmed.startsWith('@') ? trimmed.slice(1) : trimmed
+  // Assume it's a username - use centralized validation
+  const cleanedUsername = cleanUsername(trimmed)
   
-  // Validate username format (alphanumeric, hyphens, underscores)
-  const usernameRegex = /^[a-z0-9_-]+$/i
-  if (!usernameRegex.test(cleanUsername)) {
-    return { valid: false, type: 'unknown', address: '', error: 'Invalid username format' }
+  // Validate username format using centralized regex
+  if (!USERNAME_CONFIG.ALLOWED_CHARS.test(cleanedUsername)) {
+    return { valid: false, type: 'unknown', address: '', error: 'Invalid username format. Usernames can only contain lowercase letters, numbers, dots, hyphens, and underscores.' }
   }
   
   // Try to resolve username to address
-  const address = await getUsernameAddress(cleanUsername)
+  const address = await getUsernameAddress(cleanedUsername)
   
   if (address && address !== '') {
     return { valid: true, type: 'username', address }
   } else {
-    return { valid: false, type: 'username', address: '', error: `Username '@${cleanUsername}' not found` }
+    return { valid: false, type: 'username', address: '', error: `Username '@${cleanedUsername}' not found` }
   }
 }
 

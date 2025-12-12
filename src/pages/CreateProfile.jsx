@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import Card from '../components/Card'
 import Input from '../components/Input'
@@ -7,6 +7,7 @@ import Modal from '../components/Modal'
 import { uploadImage, uploadJSON, validateFile } from '../lib/pinata'
 import { ensureGasBalance } from '../lib/gasHelper'
 import { getPublicProvider } from '../lib/contracts'
+import { sanitizeUsername, validateUsername, isReservedUsername } from '../lib/username'
 
 export default function CreateProfile() {
   const { ready, authenticated, login } = usePrivy()
@@ -22,6 +23,8 @@ export default function CreateProfile() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [successData, setSuccessData] = useState(null)
   const [gasStatus, setGasStatus] = useState('') // For gas funding status messages
+  const [usernamePreview, setUsernamePreview] = useState('') // Preview of sanitized username
+  const [usernameError, setUsernameError] = useState('') // Username validation error
 
   const pageStyles = {
     minHeight: '100vh',
@@ -229,6 +232,28 @@ export default function CreateProfile() {
     boxShadow: '0 0 10px rgba(0, 47, 167, 0.5)',
   }
 
+  // Update username preview whenever name changes
+  useEffect(() => {
+    if (!name.trim()) {
+      setUsernamePreview('')
+      setUsernameError('')
+      return
+    }
+
+    const sanitized = sanitizeUsername(name)
+    setUsernamePreview(sanitized)
+
+    // Validate the sanitized username
+    const validation = validateUsername(sanitized)
+    if (!validation.valid) {
+      setUsernameError(validation.error)
+    } else if (isReservedUsername(sanitized)) {
+      setUsernameError('This username is reserved and cannot be used')
+    } else {
+      setUsernameError('')
+    }
+  }, [name])
+
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -286,6 +311,17 @@ export default function CreateProfile() {
 
     if (!name.trim()) {
       setError('Name is required')
+      return
+    }
+
+    // Validate username
+    if (usernameError) {
+      setError(usernameError)
+      return
+    }
+
+    if (!usernamePreview) {
+      setError('Unable to generate valid username from display name')
       return
     }
 
@@ -377,7 +413,8 @@ export default function CreateProfile() {
 
       // Store profile CID on-chain (CRITICAL for persistence!)
       setUploadProgress(70)
-      const username = name.toLowerCase().replace(/\s+/g, '-') // Convert to username format
+      // Use the pre-validated username from the preview
+      const username = usernamePreview
       
       const { setProfileOnChain } = await import('../lib/contracts')
       const result = await setProfileOnChain(metadataResult.cid, username, wallets[0])
@@ -439,6 +476,38 @@ export default function CreateProfile() {
                 onChange={(e) => setName(e.target.value)}
                 fullWidth
               />
+              
+              {/* Username Preview */}
+              {usernamePreview && (
+                <div style={{
+                  marginTop: '-var(--spacing-lg)',
+                  padding: 'var(--spacing-md)',
+                  backgroundColor: usernameError ? '#FEF2F2' : 'rgba(0, 47, 167, 0.05)',
+                  borderRadius: 'var(--border-radius)',
+                  border: `2px solid ${usernameError ? '#EF4444' : 'var(--color-accent)'}`,
+                }}>
+                  <div style={{ fontSize: 'var(--font-size-sm)', marginBottom: 'var(--spacing-xs)', color: '#666' }}>
+                    Your Username:
+                  </div>
+                  <div style={{
+                    fontSize: 'var(--font-size-lg)',
+                    fontWeight: 'var(--font-weight-bold)',
+                    color: usernameError ? '#EF4444' : 'var(--color-accent)',
+                    fontFamily: 'monospace'
+                  }}>
+                    @{usernamePreview}
+                  </div>
+                  {usernameError && (
+                    <div style={{
+                      fontSize: 'var(--font-size-sm)',
+                      color: '#EF4444',
+                      marginTop: 'var(--spacing-xs)'
+                    }}>
+                      {usernameError}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label style={labelStyles}>
