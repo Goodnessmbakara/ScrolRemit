@@ -185,10 +185,8 @@ export default function PublicProfile() {
         gridTemplateColumns: '120px 1fr 200px',
         gap: 'var(--spacing-xl)',
         marginBottom: 'var(--spacing-3xl)',
-        paddingBottom: 'var(--spacing-2xl)',
-        borderBottom: 'var(--border-width-thick) solid var(--color-black)',
       }} className="profile-header">
-        {/* Profile Image - Larger with thicker border */}
+        {/* Profile Image - Rounded with thicker border */}
         {profileData.imageUrl ? (
           <img 
             src={profileData.imageUrl} 
@@ -198,6 +196,7 @@ export default function PublicProfile() {
               height: '120px',
               objectFit: 'cover',
               border: 'var(--border-width-thick) solid var(--color-black)',
+              borderRadius: '12px',
             }}
             onError={(e) => {
               e.target.style.display = 'none'
@@ -209,6 +208,7 @@ export default function PublicProfile() {
             width: '120px',
             height: '120px',
             border: 'var(--border-width-thick) solid var(--color-black)',
+            borderRadius: '12px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -224,6 +224,7 @@ export default function PublicProfile() {
           width: '120px',
           height: '120px',
           border: 'var(--border-width-thick) solid var(--color-black)',
+          borderRadius: '12px',
           display: 'none',
           alignItems: 'center',
           justifyContent: 'center',
@@ -360,7 +361,31 @@ export default function PublicProfile() {
         </div>
       </div>
 
-      {/* Recent Supporters Section */}
+      {/* How It Works Section - Moved before Recent Supporters */}
+      <div style={{
+        padding: 'var(--spacing-lg)',
+        border: 'var(--border-width) solid var(--color-black)',
+        marginBottom: 'var(--spacing-2xl)',
+      }}>
+        <h3 style={{
+          fontSize: 'var(--font-size-base)',
+          fontWeight: 'var(--font-weight-semibold)',
+          marginBottom: 'var(--spacing-sm)',
+        }}>
+          How It Works
+        </h3>
+        <p style={{
+          fontSize: 'var(--font-size-sm)',
+          lineHeight: '1.6',
+          color: 'var(--color-off-black)',
+        }}>
+          Support {profileData.name || username} with real-time streaming payments. 
+          Send an instant tip or start a continuous payment stream. All transactions 
+          are direct, transparent, and powered by Scroll network.
+        </p>
+      </div>
+
+      {/* Recent Supporters Section - Real blockchain data from streams */}
       {recentSupporters.length > 0 && (
         <div style={{
           padding: 'var(--spacing-lg)',
@@ -395,29 +420,6 @@ export default function PublicProfile() {
           </div>
         </div>
       )}
-
-      {/* About Section */}
-      <div style={{
-        padding: 'var(--spacing-lg)',
-        border: 'var(--border-width) solid var(--color-black)',
-      }}>
-        <h3 style={{
-          fontSize: 'var(--font-size-base)',
-          fontWeight: 'var(--font-weight-semibold)',
-          marginBottom: 'var(--spacing-sm)',
-        }}>
-          How It Works
-        </h3>
-        <p style={{
-          fontSize: 'var(--font-size-sm)',
-          lineHeight: '1.6',
-          color: 'var(--color-off-black)',
-        }}>
-          Support {profileData.name || username} with real-time streaming payments. 
-          Send an instant tip or start a continuous payment stream. All transactions 
-          are direct, transparent, and powered by Scroll network.
-        </p>
-      </div>
 
       {/* Responsive Styles */}
       <style>{`
