@@ -158,6 +158,18 @@ export async function setProfileOnChain(cid, username, wallet) {
     const address = await signer.getAddress()
     console.log('Signer address:', address)
     
+    // Check if username is available BEFORE attempting transaction
+    console.log('🔍 Checking username availability...')
+    const available = await isUsernameAvailable(username)
+    if (!available) {
+      console.error('❌ Username already taken:', username)
+      return {
+        success: false,
+        error: `Username "${username}" is already taken. Please choose a different username.`
+      }
+    }
+    console.log('✅ Username is available')
+    
     console.log('Creating contract instance...')
     const contract = getProfileRegistryContract(signer)
     
@@ -188,9 +200,20 @@ export async function setProfileOnChain(cid, username, wallet) {
     }
   } catch (error) {
     console.error('Error setting profile on-chain:', error)
+    
+    // Try to decode custom errors
+    let errorMessage = error.message
+    
+    // Check for UsernameAlreadyTaken custom error (selector 0x2b4e2567)
+    if (error.data && typeof error.data === 'string' && error.data.startsWith('0x2b4e2567')) {
+      errorMessage = `Username "${username}" is already taken. Please choose a different username.`
+    } else if (errorMessage.includes('execution reverted') || errorMessage.includes('unknown custom error')) {
+      errorMessage = 'Transaction failed. The username may already be taken or you may already have a profile. Please try a different username.'
+    }
+    
     return {
       success: false,
-      error: error.message
+      error: errorMessage
     }
   }
 }
