@@ -71,8 +71,6 @@ function App() {
         },
         supportedChains: [scrollSepolia],
         defaultChain: scrollSepolia,
-        // Disable Solana to avoid build issues
-        solana: undefined,
       }}
     >
       <Router>
