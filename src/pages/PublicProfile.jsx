@@ -82,7 +82,21 @@ export default function PublicProfile() {
 
   // Calculate total received (deposited, not withdrawn!)
   // This shows what supporters have SENT, not what creator has CLAIMED
-  const totalReceived = streams.reduce((acc, stream) => acc + parseFloat(stream.deposit || 0), 0)
+  
+  // DEBUG: Log stream data to see what we're getting
+  useEffect(() => {
+    if (streams.length > 0) {
+      console.log('Stream data:', streams)
+      console.log('First stream:', streams[0])
+      console.log('Stream deposit values:', streams.map(s => ({ id: s.id, deposit: s.deposit, withdrawn: s.withdrawn })))
+    }
+  }, [streams])
+  
+  const totalReceived = streams.reduce((acc, stream) => {
+    const depositValue = parseFloat(stream.deposit || 0)
+    console.log(`Stream ${stream.id}: deposit=${stream.deposit}, parsed=${depositValue}`)
+    return acc + depositValue
+  }, 0)
 
   // Get unique supporters and recent activity
   const uniqueSupporters = [...new Set(streams.map(s => s.sender))].filter(Boolean)
@@ -161,30 +175,29 @@ export default function PublicProfile() {
 
   return (
     <div style={{
-      maxWidth: '700px',
+      maxWidth: '800px',
       margin: '0 auto',
       padding: 'var(--spacing-3xl) var(--spacing-lg)',
     }}>
-      {/* Compact Header - Image inline with name */}
+      {/* Header Section - 3 Column Grid: Avatar | Info | CTAs */}
       <div style={{
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: 'var(--spacing-lg)',
+        display: 'grid',
+        gridTemplateColumns: '120px 1fr 200px',
+        gap: 'var(--spacing-xl)',
         marginBottom: 'var(--spacing-3xl)',
-        paddingBottom: 'var(--spacing-xl)',
-        borderBottom: 'var(--border-width) solid var(--color-black)',
-      }}>
-        {/* Small square avatar */}
+        paddingBottom: 'var(--spacing-2xl)',
+        borderBottom: 'var(--border-width-thick) solid var(--color-black)',
+      }} className="profile-header">
+        {/* Profile Image - Larger with thicker border */}
         {profileData.imageUrl ? (
           <img 
             src={profileData.imageUrl} 
             alt={profileData.name || username}
             style={{
-              width: '80px',
-              height: '80px',
+              width: '120px',
+              height: '120px',
               objectFit: 'cover',
-              border: 'var(--border-width) solid var(--color-black)',
-              flexShrink: 0,
+              border: 'var(--border-width-thick) solid var(--color-black)',
             }}
             onError={(e) => {
               e.target.style.display = 'none'
@@ -193,38 +206,36 @@ export default function PublicProfile() {
           />
         ) : (
           <div style={{
-            width: '80px',
-            height: '80px',
-            border: 'var(--border-width) solid var(--color-black)',
+            width: '120px',
+            height: '120px',
+            border: 'var(--border-width-thick) solid var(--color-black)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 'var(--font-size-3xl)',
+            fontSize: 'var(--font-size-5xl)',
             fontWeight: 'var(--font-weight-bold)',
             backgroundColor: 'var(--color-white)',
-            flexShrink: 0,
           }}>
             {(profileData.name || username).charAt(0).toUpperCase()}
           </div>
         )}
         {/* Fallback for broken image */}
         <div style={{
-          width: '80px',
-          height: '80px',
-          border: 'var(--border-width) solid var(--color-black)',
+          width: '120px',
+          height: '120px',
+          border: 'var(--border-width-thick) solid var(--color-black)',
           display: 'none',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 'var(--font-size-3xl)',
+          fontSize: 'var(--font-size-5xl)',
           fontWeight: 'var(--font-weight-bold)',
           backgroundColor: 'var(--color-white)',
-          flexShrink: 0,
         }}>
           {(profileData.name || username).charAt(0).toUpperCase()}
         </div>
 
         {/* Name and bio */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h1 style={{
             fontSize: 'var(--font-size-4xl)',
             fontWeight: 'var(--font-weight-semibold)',
@@ -250,51 +261,51 @@ export default function PublicProfile() {
             </p>
           )}
         </div>
-      </div>
 
-      {/* Prominent Full-Width CTAs */}
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--spacing-md)',
-        marginBottom: 'var(--spacing-3xl)',
-      }}>
-        <button
-          onClick={handleSendTip}
-          style={{
-            padding: 'var(--spacing-lg) var(--spacing-xl)',
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: 'var(--font-weight-semibold)',
-            color: 'var(--color-white)',
-            backgroundColor: 'var(--color-accent)',
-            border: 'var(--border-width) solid var(--color-black)',
-            cursor: 'pointer',
-            transition: 'opacity var(--transition-fast)',
-            width: '100%',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
-          onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
-        >
-          Send Tip
-        </button>
-        <button
-          onClick={handleStartStream}
-          style={{
-            padding: 'var(--spacing-lg) var(--spacing-xl)',
-            fontSize: 'var(--font-size-lg)',
-            fontWeight: 'var(--font-weight-semibold)',
-            color: 'var(--color-black)',
-            backgroundColor: 'var(--color-white)',
-            border: 'var(--border-width) solid var(--color-black)',
-            cursor: 'pointer',
-            transition: 'transform var(--transition-base)',
-            width: '100%',
-          }}
-          onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(4px)'}
-          onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
-        >
-          Start Stream
-        </button>
+        {/* CTAs on the right */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-sm)',
+          justifyContent: 'center',
+        }}>
+          <button
+            onClick={handleSendTip}
+            style={{
+              padding: 'var(--spacing-md) var(--spacing-lg)',
+              fontSize: 'var(--font-size-base)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--color-white)',
+              backgroundColor: 'var(--color-accent)',
+              border: 'var(--border-width) solid var(--color-black)',
+              cursor: 'pointer',
+              transition: 'opacity var(--transition-fast)',
+              width: '100%',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.opacity = '0.9'}
+            onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+          >
+            Send Tip
+          </button>
+          <button
+            onClick={handleStartStream}
+            style={{
+              padding: 'var(--spacing-md) var(--spacing-lg)',
+              fontSize: 'var(--font-size-base)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--color-black)',
+              backgroundColor: 'var(--color-white)',
+              border: 'var(--border-width) solid var(--color-black)',
+              cursor: 'pointer',
+              transition: 'transform var(--transition-base)',
+              width: '100%',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateX(2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateX(0)'}
+          >
+            Start Stream
+          </button>
+        </div>
       </div>
 
       {/* Horizontal Stats Bar */}
@@ -411,6 +422,11 @@ export default function PublicProfile() {
       {/* Responsive Styles */}
       <style>{`
         @media (max-width: 768px) {
+          .profile-header {
+            grid-template-columns: 1fr !important;
+            gap: var(--spacing-lg) !important;
+          }
+          
           h1 {
             font-size: var(--font-size-3xl) !important;
           }
