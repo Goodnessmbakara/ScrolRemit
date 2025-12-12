@@ -12,6 +12,7 @@ const Send = lazy(() => import('./pages/Send'))
 const Profile = lazy(() => import('./pages/Profile'))
 const PublicProfile = lazy(() => import('./pages/PublicProfile'))
 const Browse = lazy(() => import('./pages/Browse'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Loading fallback component
 const PageLoader = () => (
@@ -86,6 +87,7 @@ function App() {
                 <Route path="/send" element={<Send />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:username" element={<PublicProfile />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </main>
