@@ -173,9 +173,16 @@ export default function Profile() {
           if (!imageUrl || imageUrl === '' || imageUrl.includes('undefined')) {
             if (profileData?.imageCid) {
               const gateway = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
-              imageUrl = `https://${gateway}/ipfs/${profileData.imageCid}?img-width=500&img-quality=85&img-format=webp`
+              // Check if gateway already includes protocol
+              const gatewayUrl = gateway.startsWith('http') ? gateway : `https://${gateway}`
+              imageUrl = `${gatewayUrl}/ipfs/${profileData.imageCid}?img-width=500&img-quality=85&img-format=webp`
               console.log('🔧 Recovered image URL from imageCid:', imageUrl)
             }
+          } else if (imageUrl && !imageUrl.startsWith('http')) {
+            // If imageUrl exists but doesn't have protocol, add it
+            const gateway = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+            const gatewayUrl = gateway.startsWith('http') ? gateway : `https://${gateway}`
+            imageUrl = `${gatewayUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
           }
 
           // Render image if we have a valid URL

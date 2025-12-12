@@ -60,12 +60,19 @@ export default function Browse() {
 
           const metadata = await fetchFromIPFS(cid)
           
-          // Image recovery logic
-          let imageUrl = metadata?.imageUrl
-          if ((!imageUrl || imageUrl === '' || imageUrl.includes('undefined')) && metadata?.imageCid) {
-             const gateway = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
-             imageUrl = `https://${gateway}/ipfs/${metadata.imageCid}?img-width=500&img-quality=85&img-format=webp`
-          }
+                    // Image recovery logic
+           let imageUrl = metadata?.imageUrl
+           if ((!imageUrl || imageUrl === '' || imageUrl.includes('undefined')) && metadata?.imageCid) {
+              const gateway = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+              // Check if gateway already includes protocol
+              const gatewayUrl = gateway.startsWith('http') ? gateway : `https://${gateway}`
+              imageUrl = `${gatewayUrl}/ipfs/${metadata.imageCid}?img-width=500&img-quality=85&img-format=webp`
+           } else if (imageUrl && !imageUrl.startsWith('http')) {
+              // If imageUrl exists but doesn't have protocol, add it
+              const gateway = import.meta.env.VITE_PINATA_GATEWAY || 'gateway.pinata.cloud'
+              const gatewayUrl = gateway.startsWith('http') ? gateway : `https://${gateway}`
+              imageUrl = `${gatewayUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
+           }
 
           // Fetch real supporter count
           const supporterCount = await getSupporterCount(user.address)

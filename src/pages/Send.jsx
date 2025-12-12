@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
+import { useLocation } from 'react-router-dom'
 import Card from '../components/Card'
 import Input from '../components/Input'
 import Button from '../components/Button'
@@ -18,6 +19,7 @@ import {
 export default function Send() {
   const { authenticated, login } = usePrivy()
   const { wallets } = useWallets()
+  const location = useLocation()
   
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
@@ -31,6 +33,16 @@ export default function Send() {
   const [txStatus, setTxStatus] = useState('')
   const [txHash, setTxHash] = useState('')
   const [streamId, setStreamId] = useState(null)
+
+  // Handle pre-filled data from navigation state (from PublicProfile)
+  useEffect(() => {
+    if (location.state?.recipient) {
+      setRecipient(location.state.recipient)
+    }
+    if (location.state?.sendType) {
+      setSendType(location.state.sendType)
+    }
+  }, [location.state])
 
   const containerStyles = {
     maxWidth: '600px',

@@ -101,9 +101,6 @@ export default function Landing() {
               <Link to="/dashboard">
                 <Button variant="primary">Launch App</Button>
               </Link>
-              <a href="https://docs.scrolremit.com" target="_blank" rel="noopener noreferrer">
-                <Button variant="secondary">Read Docs</Button>
-              </a>
             </div>
           </div>
           <div>
