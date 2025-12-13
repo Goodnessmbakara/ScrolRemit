@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useWallets } from '@privy-io/react-auth'
 import { ethers } from 'ethers'
-import { getProfileRegistryContract, CONTRACTS } from '../lib/contracts'
+import { getProfileRegistryContract, getPublicProvider, CONTRACTS } from '../lib/contracts'
 
 export default function WalletDropdown({ user, logout }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -24,7 +24,7 @@ export default function WalletDropdown({ user, logout }) {
       }
       
       try {
-        const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
+        const provider = getPublicProvider() // Use configured RPC from .env
         const contract = getProfileRegistryContract(provider)
         
         const username = await contract.getUsername(address)
@@ -47,7 +47,7 @@ export default function WalletDropdown({ user, logout }) {
     async function fetchBalance() {
       if (!wallet) return
       try {
-        const provider = new ethers.JsonRpcProvider('https://sepolia-rpc.scroll.io/')
+        const provider = getPublicProvider() // Use configured RPC from .env
         const bal = await provider.getBalance(address)
         setBalance(ethers.formatEther(bal))
       } catch (error) {

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { getProfileFromChain } from '../lib/contracts'
 import { fetchFromIPFS } from '../lib/pinata'
 import CreateProfile from './CreateProfile'
 
 export default function Profile() {
+  const navigate = useNavigate()
   const { ready, authenticated } = usePrivy()
   const { wallets } = useWallets()
   const [loading, setLoading] = useState(true)
@@ -270,7 +272,7 @@ export default function Profile() {
           flexWrap: 'wrap'
         }} className="profile-actions">
           <button
-            onClick={() => window.location.href = '/dashboard'}
+            onClick={() => navigate('/profile/edit')}
             style={{
               padding: 'var(--spacing-md) var(--spacing-2xl)',
               backgroundColor: 'var(--color-accent)',
@@ -289,6 +291,30 @@ export default function Profile() {
             onMouseLeave={(e) => {
               e.target.style.transform = 'translateY(0)'
               e.target.style.boxShadow = 'none'
+            }}
+          >
+            ✏️ Edit Profile
+          </button>
+          <button
+            onClick={() => window.location.href = '/dashboard'}
+            style={{
+              padding: 'var(--spacing-md) var(--spacing-2xl)',
+              backgroundColor: 'white',
+              color: 'var(--color-accent)',
+              border: '2px solid var(--color-accent)',
+              borderRadius: 'var(--border-radius)',
+              fontSize: 'var(--font-size-lg)',
+              fontWeight: 'var(--font-weight-semibold)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = 'var(--color-accent)'
+              e.target.style.color = 'white'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = 'white'
+              e.target.style.color = 'var(--color-accent)'
             }}
           >
             📊 Dashboard
