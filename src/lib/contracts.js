@@ -609,8 +609,10 @@ export async function createStream(signer, recipient, amountUSDC, duration, isSe
     const amount = ethers.parseUnits(amountUSDC.toString(), 6)
     const durationSeconds = isSeconds ? duration : Math.ceil(parseFloat(duration) * 24 * 60 * 60)
     
-    // Check allowance
-    const currentAllowance = await usdcContract.allowance(
+    // Check allowance - Use public provider for reliability
+    const publicProvider = getPublicProvider()
+    const usdcPublic = getUSDCContract(publicProvider)
+    const currentAllowance = await usdcPublic.allowance(
       await signer.getAddress(),
       CONTRACTS.STREAMING_PAYMENT
     )

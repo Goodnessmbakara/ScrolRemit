@@ -13,7 +13,8 @@ import {
   createStream, 
   getUSDCContract,
   sendInstantPayment,
-  mintMockUSDC
+  mintMockUSDC,
+  getPublicProvider
 } from '../lib/contracts'
 
 export default function Send() {
@@ -181,7 +182,8 @@ export default function Send() {
 
       // ====== 4. Check USDC Balance ======
       setTxStatus('Checking USDC balance...')
-      const usdcContract = getUSDCContract(signer)
+      // Use PublicProvider for reading state to avoid RPC errors from user wallet
+      const usdcContract = getUSDCContract(getPublicProvider())
       const balance = await usdcContract.balanceOf(senderAddress)
       const balanceFormatted = parseFloat(ethers.formatUnits(balance, 6))
 
