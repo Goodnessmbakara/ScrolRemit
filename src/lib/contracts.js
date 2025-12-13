@@ -68,9 +68,54 @@ export const USDC_ABI = [
  * Get public JSON-RPC provider for read-only operations
  * @returns {ethers.JsonRpcProvider} Provider instance
  */
+// RPC providers in priority order (most reliable first)
+const RPC_PROVIDERS = [
+  'https://scroll-sepolia-rpc.publicnode.com',  // PublicNode - free, no API key, high limits
+  'https://sepolia-rpc.scroll.io/',              // Official Scroll - can be rate limited
+  'https://scroll-sepolia.chainstacklabs.com',   // Chainstack - backup
+]
+
+let cachedProvider = null
+let workingRpcIndex = 0
+
+/**
+ * Get a working RPC provider with automatic fallback
+ * @returns {ethers.JsonRpcProvider} Provider instance
+ */
 export function getPublicProvider() {
-  const rpcUrl = import.meta.env.VITE_RPC_URL || 'https://sepolia-rpc.scroll.io/'
-  return new ethers.JsonRpcProvider(rpcUrl)
+  // Return cached provider if available
+  if (cachedProvider) {
+    return cachedProvider
+  }
+
+  // Try environment variable first
+  const envRpc = import.meta.env.VITE_RPC_URL
+  if (envRpc) {
+    try {
+      cachedProvider = new ethers.JsonRpcProvider(envRpc)
+      console.log('✅ Using RPC from env:', envRpc)
+      return cachedProvider
+    } catch (error) {
+      console.warn('⚠️ Failed to create provider from env RPC:', error.message)
+    }
+  }
+
+  // Fallback to provider list
+  const rpcUrl = RPC_PROVIDERS[workingRpcIndex]
+  cachedProvider = new ethers.JsonRpcProvider(rpcUrl)
+  console.log(`✅ Using RPC provider [${workingRpcIndex + 1}/${RPC_PROVIDERS.length}]:`, rpcUrl)
+  return cachedProvider
+}
+
+/**
+ * Try next RPC provider if current one fails
+ * Call this when you get errors from the current provider
+ */
+export function switchToNextProvider() {
+  workingRpcIndex = (workingRpcIndex + 1) % RPC_PROVIDERS.length
+  cachedProvider = null
+  console.log(`🔄 Switching to next RPC provider [${workingRpcIndex + 1}/${RPC_PROVIDERS.length}]`)
+  return getPublicProvider()
 }
 
 /**
@@ -439,16 +484,53 @@ export async function getAllUsernames() {
   }
   
   // Production: Query blockchain for all ProfileUpdated events
+  // Production: Query blockchain for all ProfileUpdated events
   try {
     console.log('🔍 [PROFILES] Querying blockchain for ProfileUpdated events...')
     const provider = getPublicProvider()
     const contract = getProfileRegistryContract(provider)
     
-    // Query ProfileUpdated events (global, not filtered by address)
-    // Note: Scroll Sepolia RPC limits to ~10K blocks per query
+    // Query ProfileUpdated events (global)
     const filter = contract.filters.ProfileUpdated()
-    console.log('📡 [PROFILES] Fetching events from last 10,000 blocks...')
-    const events = await contract.queryFilter(filter, -10000) // Last ~33 hours on Scroll Sepolia
+    
+    let events = []
+    
+    try {
+      // 1. Determine search range
+      const currentBlock = await provider.getBlockNumber()
+      
+      // Scroll Sepolia has ~3s block time. 
+      // 200,000 blocks ≈ 1 week of history. This should be sufficient for the testnet.
+      const SEARCH_WINDOW = 200000 
+      const fromBlock = Math.max(0, currentBlock - SEARCH_WINDOW)
+      const CHUNK_SIZE = 20000 // Safe chunk size for PublicNode/Ankr
+      
+      console.log(`📡 [PROFILES] Scanning blocks ${fromBlock} to ${currentBlock} (Window: ${SEARCH_WINDOW})`)
+      
+      // 2. Fetch in chunks to avoid RPC "Block range too large" errors
+      const chunks = []
+      for (let i = fromBlock; i < currentBlock; i += CHUNK_SIZE) {
+        const to = Math.min(i + CHUNK_SIZE, currentBlock)
+        chunks.push({ from: i, to })
+      }
+      
+      // Execute chunk queries (sequentially to be nice to RPC)
+      for (const chunk of chunks) {
+        try {
+          // console.log(`   Scanning ${chunk.from} -> ${chunk.to}...`)
+          const chunkEvents = await contract.queryFilter(filter, chunk.from, chunk.to)
+          events.push(...chunkEvents)
+        } catch (err) {
+          console.warn(`⚠️ [PROFILES] Failed to query chunk ${chunk.from}-${chunk.to}:`, err.message)
+          // Continue to next chunk even if one fails
+        }
+      }
+      
+    } catch (blockError) {
+      console.error('❌ [PROFILES] Error getting block number:', blockError)
+      // Fallback: try simple recent query if advanced chunking fails completely
+      events = await contract.queryFilter(filter, -10000)
+    }
     
     console.log('📦 [PROFILES] Found', events.length, 'ProfileUpdated events')
     

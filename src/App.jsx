@@ -10,6 +10,7 @@ const Landing = lazy(() => import('./pages/Landing'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Send = lazy(() => import('./pages/Send'))
 const Profile = lazy(() => import('./pages/Profile'))
+const EditProfile = lazy(() => import('./pages/EditProfile'))
 const PublicProfile = lazy(() => import('./pages/PublicProfile'))
 const Browse = lazy(() => import('./pages/Browse'))
 const NotFound = lazy(() => import('./pages/NotFound'))
@@ -40,10 +41,10 @@ const scrollSepolia = {
   },
   rpcUrls: {
     default: {
-      http: ['https://sepolia-rpc.scroll.io/'],
+      http: ['https://scroll-sepolia-rpc.publicnode.com'],
     },
     public: {
-      http: ['https://sepolia-rpc.scroll.io/'],
+      http: ['https://scroll-sepolia-rpc.publicnode.com'],
     },
   },
   blockExplorers: {
@@ -86,6 +87,7 @@ function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/send" element={<Send />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/profile/edit" element={<EditProfile />} />
                 <Route path="/u/:username" element={<PublicProfile />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
